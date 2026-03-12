@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { 
   LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   BarChart, Bar
@@ -10,10 +10,40 @@ import {
 import { motion } from 'motion/react';
 import { generateNexusData, nexusNarrative } from './data';
 import { cn } from './lib/utils';
+import type { LiveMetric, LiveMetricsResponse } from './lib/liveMetrics';
+import OilDynamics from './pages/OilDynamics';
+import RetirementImpact from './pages/RetirementImpact';
+import Analysis from './pages/Analysis';
 
 const data = generateNexusData();
+const LIVE_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
-const StatCard = ({ title, value, subValue, icon: Icon, trend, color }: any) => (
+const formatSyncLabel = (value?: string) => {
+  if (!value) {
+    return 'Waiting for sync';
+  }
+
+  return new Date(value).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+};
+
+const StatCard = ({
+  title,
+  value,
+  subValue,
+  icon: Icon,
+  trend,
+  color,
+  sourceLabel,
+  sourceHref,
+  publishedAt,
+  syncedAt,
+  note,
+}: any) => (
   <motion.div 
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -38,6 +68,25 @@ const StatCard = ({ title, value, subValue, icon: Icon, trend, color }: any) => 
       <span className="text-2xl font-bold text-slate-900">{value}</span>
       <span className="text-slate-400 text-xs">{subValue}</span>
     </div>
+    {sourceLabel && sourceHref && (
+      <div className="mt-4 border-t border-slate-100 pt-3">
+        <a
+          href={sourceHref}
+          target="_blank"
+          rel="noreferrer"
+          className="text-[11px] font-medium text-slate-500 underline decoration-slate-300 underline-offset-2 hover:text-slate-700"
+        >
+          Source: {sourceLabel}
+        </a>
+        <p className="mt-2 text-[11px] text-slate-400">
+          Published: {publishedAt || 'N/A'}
+        </p>
+        <p className="text-[11px] text-slate-400">
+          Synced: {formatSyncLabel(syncedAt)}
+        </p>
+        {note && <p className="mt-2 text-[11px] leading-relaxed text-slate-500">{note}</p>}
+      </div>
+    )}
   </motion.div>
 );
 
@@ -61,12 +110,51 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('overview');
+  const [liveMetrics, setLiveMetrics] = useState<LiveMetricsResponse | null>(null);
+  const [liveMetricsError, setLiveMetricsError] = useState<string | null>(null);
+  const [isRefreshingMetrics, setIsRefreshingMetrics] = useState(false);
 
   const latest = data[data.length - 1];
   const initial = data[0];
+
+  const loadLiveMetrics = useCallback(async () => {
+    setIsRefreshingMetrics(true);
+    try {
+      const response = await fetch('/api/live-metrics');
+      if (!response.ok) {
+        throw new Error(`Live metrics request failed with ${response.status}`);
+      }
+
+      const payload: LiveMetricsResponse = await response.json();
+      setLiveMetrics(payload);
+      setLiveMetricsError(null);
+    } catch (error) {
+      setLiveMetricsError(error instanceof Error ? error.message : 'Could not load live metrics.');
+    } finally {
+      setIsRefreshingMetrics(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadLiveMetrics();
+    const intervalId = window.setInterval(loadLiveMetrics, LIVE_REFRESH_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [loadLiveMetrics]);
   
   const oilChange = (((latest.oilPrice - initial.oilPrice) / initial.oilPrice) * 100).toFixed(1);
   const wealthChange = (((latest.retirementIndex - initial.retirementIndex) / initial.retirementIndex) * 100).toFixed(1);
+
+  const cardOilConsumption = liveMetrics?.metrics.oilConsumption;
+  const cardOilPrice = liveMetrics?.metrics.oilPrice;
+  const cardTotalRetirement = liveMetrics?.metrics.totalRetirementAssets;
+  const cardRetirementIndex = liveMetrics?.metrics.retirementIndex;
+  const cardInflation = liveMetrics?.metrics.inflationPressure;
+
+  const heroOilPriceValue = cardOilPrice ? cardOilPrice.displayValue.replace('$', '') : `${latest.oilPrice}`;
+  const heroWealthDelta = cardRetirementIndex ? `${cardRetirementIndex.trend.toFixed(1)}` : wealthChange;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-100">
@@ -102,6 +190,8 @@ export default function App() {
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8">
+        {activeTab === 'overview' && (
+        <>
         {/* Hero Section */}
         <section className="mb-12">
           <div className="grid lg:grid-cols-3 gap-8 items-center">
@@ -126,12 +216,12 @@ export default function App() {
                 <div className="space-y-6">
                   <div>
                     <p className="text-slate-400 text-sm mb-1">Avg. Oil Price (2026)</p>
-                    <p className="text-3xl font-bold">${latest.oilPrice}<span className="text-sm font-normal text-slate-500 ml-2">/bbl</span></p>
+                    <p className="text-3xl font-bold">${heroOilPriceValue}<span className="text-sm font-normal text-slate-500 ml-2">/bbl</span></p>
                   </div>
                   <div className="h-px bg-slate-800" />
                   <div>
                     <p className="text-slate-400 text-sm mb-1">Retirement Growth Delta</p>
-                    <p className="text-3xl font-bold text-rose-400">{wealthChange}%<span className="text-sm font-normal text-slate-500 ml-2">vs 2024</span></p>
+                    <p className="text-3xl font-bold text-rose-400">{heroWealthDelta}%<span className="text-sm font-normal text-slate-500 ml-2">vs 2024 Q3</span></p>
                   </div>
                 </div>
               </div>
@@ -143,46 +233,98 @@ export default function App() {
         </section>
 
         {/* Stats Grid */}
+        <div className="mb-4 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-sm text-slate-500">
+              Hero cards sync from public sources on load and every 6 hours while this page is open.
+            </p>
+            <p className="text-xs text-slate-400">
+              Source cadence: oil price daily, energy CPI monthly, OPEC monthly, retirement assets quarterly.
+            </p>
+          </div>
+          <button
+            onClick={loadLiveMetrics}
+            disabled={isRefreshingMetrics}
+            className={cn(
+              'inline-flex items-center justify-center rounded-xl border px-4 py-2 text-sm font-semibold transition-colors',
+              isRefreshingMetrics
+                ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
+                : 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+            )}
+          >
+            {isRefreshingMetrics ? 'Refreshing...' : 'Refresh now'}
+          </button>
+        </div>
+        {liveMetricsError && (
+          <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Live metrics unavailable right now. The page is showing local fallback values until the next successful sync.
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
           <StatCard 
-            title="Global Oil Consumption" 
-            value={`${latest.oilConsumption}M`} 
-            subValue="Barrels / Day" 
+            title={cardOilConsumption?.title || 'Global Oil Consumption'} 
+            value={cardOilConsumption?.displayValue || `${latest.oilConsumption}M`} 
+            subValue={cardOilConsumption?.subValue || 'Barrels / Day'} 
             icon={Droplets} 
-            trend={2.4}
+            trend={cardOilConsumption?.trend ?? 2.4}
             color="bg-blue-600"
+            sourceLabel={cardOilConsumption?.sourceLabel || 'IEA Oil Market Report'}
+            sourceHref={cardOilConsumption?.sourceHref || 'https://www.iea.org/reports/oil-market-report'}
+            publishedAt={cardOilConsumption?.publishedAt}
+            syncedAt={cardOilConsumption?.syncedAt}
+            note={cardOilConsumption?.note}
           />
           <StatCard 
-            title="Crude Price Index" 
-            value={`$${latest.oilPrice}`} 
-            subValue="WTI Crude" 
+            title={cardOilPrice?.title || 'Crude Price Index'} 
+            value={cardOilPrice?.displayValue || `$${latest.oilPrice}`} 
+            subValue={cardOilPrice?.subValue || 'WTI Crude'} 
             icon={Zap} 
-            trend={parseFloat(oilChange)}
+            trend={cardOilPrice?.trend ?? parseFloat(oilChange)}
             color="bg-amber-600"
+            sourceLabel={cardOilPrice?.sourceLabel || 'FRED WTI Spot Price'}
+            sourceHref={cardOilPrice?.sourceHref || 'https://fred.stlouisfed.org/series/DCOILWTICO'}
+            publishedAt={cardOilPrice?.publishedAt}
+            syncedAt={cardOilPrice?.syncedAt}
+            note={cardOilPrice?.note}
           />
           <StatCard 
-            title="Total Retirement Assets" 
-            value={`$${latest.totalRetirementAssets}T`} 
-            subValue="US Total (401k/IRA)" 
+            title={cardTotalRetirement?.title || 'Total Retirement Assets'} 
+            value={cardTotalRetirement?.displayValue || `$${latest.totalRetirementAssets}T`} 
+            subValue={cardTotalRetirement?.subValue || 'US Total (401k/IRA)'} 
             icon={Wallet} 
-            trend={parseFloat(wealthChange)}
+            trend={cardTotalRetirement?.trend ?? parseFloat(wealthChange)}
             color="bg-indigo-600"
+            sourceLabel={cardTotalRetirement?.sourceLabel || 'ICI Retirement Assets'}
+            sourceHref={cardTotalRetirement?.sourceHref || 'https://www.ici.org/research/stats/retirement'}
+            publishedAt={cardTotalRetirement?.publishedAt}
+            syncedAt={cardTotalRetirement?.syncedAt}
+            note={cardTotalRetirement?.note}
           />
           <StatCard 
-            title="Retirement Index" 
-            value={latest.retirementIndex} 
-            subValue="Growth Benchmark" 
+            title={cardRetirementIndex?.title || 'Retirement Index'} 
+            value={cardRetirementIndex?.displayValue || latest.retirementIndex} 
+            subValue={cardRetirementIndex?.subValue || 'Growth Benchmark'} 
             icon={TrendingUp} 
-            trend={parseFloat(wealthChange)}
+            trend={cardRetirementIndex?.trend ?? parseFloat(wealthChange)}
             color="bg-emerald-600"
+            sourceLabel={cardRetirementIndex?.sourceLabel || 'Modeled from ICI + WTI'}
+            sourceHref={cardRetirementIndex?.sourceHref || 'https://www.ici.org/research/stats/retirement'}
+            publishedAt={cardRetirementIndex?.publishedAt}
+            syncedAt={cardRetirementIndex?.syncedAt}
+            note={cardRetirementIndex?.note}
           />
           <StatCard 
-            title="Inflation Pressure" 
-            value={`${latest.inflationRate}%`} 
-            subValue="Energy Core" 
+            title={cardInflation?.title || 'Inflation Pressure'} 
+            value={cardInflation?.displayValue || `${latest.inflationRate}%`} 
+            subValue={cardInflation?.subValue || 'Energy Core'} 
             icon={AlertTriangle} 
-            trend={1.2}
+            trend={cardInflation?.trend ?? 1.2}
             color="bg-rose-600"
+            sourceLabel={cardInflation?.sourceLabel || 'BLS CPI Energy'}
+            sourceHref={cardInflation?.sourceHref || 'https://www.bls.gov/cpi/'}
+            publishedAt={cardInflation?.publishedAt}
+            syncedAt={cardInflation?.syncedAt}
+            note={cardInflation?.note}
           />
         </div>
 
@@ -537,6 +679,20 @@ export default function App() {
           </div>
           <div className="absolute right-0 top-0 w-1/3 h-full bg-gradient-to-l from-indigo-500/10 to-transparent hidden lg:block" />
         </section>
+        </>
+        )}
+
+        {activeTab === 'oil dynamics' && (
+          <OilDynamics />
+        )}
+
+        {activeTab === 'retirement impact' && (
+          <RetirementImpact />
+        )}
+
+        {activeTab === 'analysis' && (
+          <Analysis />
+        )}
       </main>
 
       <footer className="border-t border-slate-200 bg-white py-12 px-6">

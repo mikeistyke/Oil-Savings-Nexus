@@ -2,11 +2,33 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig, loadEnv} from 'vite';
+import {getLiveMetrics} from './live-metrics.server';
 
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [
+      react(),
+      tailwindcss(),
+      {
+        name: 'live-metrics-api',
+        configureServer(server) {
+          server.middlewares.use('/api/live-metrics', async (_req, res) => {
+            try {
+              const payload = await getLiveMetrics();
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(payload));
+            } catch (error) {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({
+                message: error instanceof Error ? error.message : 'Unknown live metrics error',
+              }));
+            }
+          });
+        },
+      },
+    ],
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
     },
