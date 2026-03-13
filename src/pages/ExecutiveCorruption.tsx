@@ -64,7 +64,12 @@ function ExecutiveCorruptionContent() {
                 <AdSlot slot={ADSENSE_ESSAY_SLOT} label="Advertisement" />
               )}
               {index === 0 && (
-                <AffiliateRecommendations title="Further Reading" items={essayAffiliateItems} />
+                <AffiliateRecommendations
+                  title="Further Reading"
+                  items={essayAffiliateItems}
+                  pageId="executive-corruption"
+                  blockId="executive-corruption-further-reading"
+                />
               )}
             </React.Fragment>
           ))}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { ExternalLink, ShoppingBag } from 'lucide-react';
 import { motion } from 'motion/react';
+import type { RecordAffiliateClickRequest } from '../lib/affiliateClicks';
 
 interface AffiliateItem {
   title: string;
@@ -12,6 +13,8 @@ interface AffiliateItem {
 interface AffiliateRecommendationsProps {
   title?: string;
   items: AffiliateItem[];
+  pageId: string;
+  blockId: string;
 }
 
 const AMAZON_AFFILIATE_TAG = import.meta.env.VITE_AMAZON_AFFILIATE_TAG;
@@ -31,7 +34,32 @@ function buildAmazonUrl(searchTerm: string) {
 export default function AffiliateRecommendations({
   title = 'Recommended Reading',
   items,
+  pageId,
+  blockId,
 }: AffiliateRecommendationsProps) {
+  const trackClick = (payload: RecordAffiliateClickRequest) => {
+    try {
+      const body = JSON.stringify(payload);
+
+      if (navigator.sendBeacon) {
+        const blob = new Blob([body], { type: 'application/json' });
+        navigator.sendBeacon('/api/affiliate-clicks', blob);
+        return;
+      }
+
+      void fetch('/api/affiliate-clicks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body,
+        keepalive: true,
+      });
+    } catch (error) {
+      console.error('[affiliate-clicks] tracking failed:', error);
+    }
+  };
+
   if (!AMAZON_AFFILIATE_TAG || !items.length) {
     return null;
   }
@@ -60,6 +88,12 @@ export default function AffiliateRecommendations({
             target="_blank"
             rel="noreferrer"
             className="rounded-2xl border border-amber-200 bg-white p-5 transition-shadow hover:shadow-md"
+            onClick={() => trackClick({
+              pageId,
+              blockId,
+              itemTitle: item.title,
+              destinationUrl: buildAmazonUrl(item.searchTerm),
+            })}
           >
             <div className="flex items-start justify-between gap-4">
               <div>

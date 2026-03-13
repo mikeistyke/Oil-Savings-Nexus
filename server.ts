@@ -9,6 +9,7 @@ import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { getLiveMetrics } from './live-metrics.server.js';
 import { getVisitorStats, recordVisit } from './visitor-tracking.server.js';
+import { getAffiliateAnalytics, recordAffiliateClick } from './affiliate-clicks.server.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -53,6 +54,43 @@ app.post('/api/visitor-stats', (req, res) => {
   } catch (error) {
     res.status(500).json({
       message: error instanceof Error ? error.message : 'Unknown visitor-stats error',
+    });
+  }
+});
+
+app.get('/api/affiliate-clicks', (_req, res) => {
+  try {
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(getAffiliateAnalytics());
+  } catch (error) {
+    res.status(500).json({
+      message: error instanceof Error ? error.message : 'Unknown affiliate-clicks error',
+    });
+  }
+});
+
+app.post('/api/affiliate-clicks', (req, res) => {
+  try {
+    if (!req.body?.pageId || !req.body?.blockId || !req.body?.itemTitle || !req.body?.destinationUrl) {
+      res.status(400).json({ message: 'Missing required affiliate click fields.' });
+      return;
+    }
+
+    const analytics = recordAffiliateClick({
+      pageId: req.body.pageId,
+      blockId: req.body.blockId,
+      itemTitle: req.body.itemTitle,
+      destinationUrl: req.body.destinationUrl,
+      visitorId: req.body.visitorId,
+      ipAddress: req.headers['x-forwarded-for']?.toString() ?? req.socket.remoteAddress ?? '',
+      userAgent: req.headers['user-agent'] ?? '',
+    });
+
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(analytics);
+  } catch (error) {
+    res.status(500).json({
+      message: error instanceof Error ? error.message : 'Unknown affiliate-clicks error',
     });
   }
 });

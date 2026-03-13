@@ -7,6 +7,9 @@
     },
     "api/visitor-stats.ts": {
       "maxDuration": 10
+    },
+    "api/affiliate-clicks.ts": {
+      "maxDuration": 10
     }
   },
   "rewrites": [

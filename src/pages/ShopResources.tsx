@@ -77,7 +77,12 @@ export default function ShopResources() {
           <p className="mb-6 text-sm leading-7 text-slate-600">
             For readers following policy shocks, oil supply dynamics, and commodity-driven inflation scenarios.
           </p>
-          <AffiliateRecommendations title="Energy and Macro Picks" items={macroEnergyItems} />
+          <AffiliateRecommendations
+            title="Energy and Macro Picks"
+            items={macroEnergyItems}
+            pageId="shop-resources"
+            blockId="shop-resources-energy-macro"
+          />
         </motion.section>
 
         <AdSlot slot={ADSENSE_SHOP_SLOT} label="Advertisement" />
@@ -94,7 +99,12 @@ export default function ShopResources() {
           <p className="mb-6 text-sm leading-7 text-slate-600">
             For readers building long-run strategy under uncertainty, inflation drift, and volatile risk sentiment.
           </p>
-          <AffiliateRecommendations title="Retirement and Investing Picks" items={householdWealthItems} />
+          <AffiliateRecommendations
+            title="Retirement and Investing Picks"
+            items={householdWealthItems}
+            pageId="shop-resources"
+            blockId="shop-resources-retirement-investing"
+          />
         </motion.section>
       </div>
     </div>
