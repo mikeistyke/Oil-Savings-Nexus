@@ -14,12 +14,13 @@ import type { LiveMetric, LiveMetricsResponse } from './lib/liveMetrics';
 import OilDynamics from './pages/OilDynamics';
 import RetirementImpact from './pages/RetirementImpact';
 import Analysis from './pages/Analysis';
+import ExecutiveCorruption from './pages/ExecutiveCorruption';
 
 const data = generateNexusData();
 const LIVE_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
 const LIVE_METRICS_TIMEOUT_MS = 35000;
 const MIN_REFRESH_INTERVAL_MS = 60 * 1000;
-const TAB_LABELS = ['Overview', 'Oil Dynamics', 'Retirement Impact', 'Analysis'] as const;
+const TAB_LABELS = ['Overview', 'Oil Dynamics', 'Retirement Impact', 'Analysis', 'Executive Corruption'] as const;
 
 const formatRefreshInterval = (value: number) => {
   const hours = value / (60 * 60 * 1000);
@@ -887,6 +888,10 @@ export default function App() {
 
         {activeTab === 'analysis' && (
           <Analysis />
+        )}
+
+        {activeTab === 'executive corruption' && (
+          <ExecutiveCorruption />
         )}
       </main>
 
