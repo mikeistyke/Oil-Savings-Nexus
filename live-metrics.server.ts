@@ -2,7 +2,7 @@ import XLSX from 'xlsx';
 
 export const LIVE_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
 const SERVER_CACHE_TTL_MS = 60 * 60 * 1000;
-const FETCH_TIMEOUT_MS = 12000;
+const FETCH_TIMEOUT_MS = 5000;
 
 type MetricKey = 'oilConsumption' | 'oilPrice' | 'totalRetirementAssets' | 'retirementIndex' | 'inflationPressure';
 
@@ -98,15 +98,19 @@ export async function getLiveMetrics(): Promise<LiveMetricsResponse> {
 }
 
 async function getWtiMetric(syncedAt: string): Promise<LiveMetric> {
-  try {
-    const rows = await fetchFredSeries('DCOILWTICO');
-    const latest = rows.at(-1);
-    const prior = rows.at(Math.max(rows.length - 22, 0));
+  // Race FRED and Stooq simultaneously — whichever answers first wins.
+  type FredResult = { source: 'fred'; rows: Array<{ date: string; value: number }> };
+  type StooqResult = { source: 'stooq'; quote: { open: number; close: number; dateLabel: string } };
 
-    if (!latest || !prior) {
-      throw new Error('WTI series did not contain enough observations.');
-    }
+  const result = await Promise.any<FredResult | StooqResult>([
+    fetchFredSeries('DCOILWTICO').then((rows) => ({ source: 'fred' as const, rows })),
+    fetchStooqCrudeQuote().then((quote) => ({ source: 'stooq' as const, quote })),
+  ]);
 
+  if (result.source === 'fred') {
+    const latest = result.rows.at(-1);
+    const prior = result.rows.at(Math.max(result.rows.length - 22, 0));
+    if (!latest || !prior) throw new Error('WTI series did not contain enough observations.');
     return {
       title: 'Crude Price Index',
       value: latest.value,
@@ -120,18 +124,18 @@ async function getWtiMetric(syncedAt: string): Promise<LiveMetric> {
       syncedAt,
       note: 'Trend compares the latest close with roughly one trading month earlier.',
     };
-  } catch {
-    const stooqQuote = await fetchStooqCrudeQuote();
+  } else {
+    const { open, close, dateLabel } = result.quote;
     return {
       title: 'Crude Price Index',
-      value: stooqQuote.close,
-      displayValue: `$${stooqQuote.close.toFixed(2)}`,
+      value: close,
+      displayValue: `$${close.toFixed(2)}`,
       subValue: 'CL.F Futures (proxy)',
-      trend: percentChange(stooqQuote.close, stooqQuote.open),
+      trend: percentChange(close, open),
       sourceLabel: 'Stooq CL.F Daily Quote',
       sourceHref: 'https://stooq.com/q/l/?s=cl.f',
       sourceFrequency: 'Daily',
-      publishedAt: stooqQuote.dateLabel,
+      publishedAt: dateLabel,
       syncedAt,
       note: 'Fallback source used when FRED WTI is temporarily unavailable.',
     };
@@ -262,23 +266,30 @@ async function getLatestIciWorkbookPayload(): Promise<{ url: string; buffer: Buf
     }
   }
 
-  // Stable known fallback from current workbook naming convention.
-  candidates.push('https://www.ici.org/statistical-report/ret_25_q3_data.xls');
-
-  for (const candidateUrl of candidates) {
-    try {
-      const buffer = await fetchBuffer(candidateUrl);
-      return { url: candidateUrl, buffer };
-    } catch {
-      // Continue searching older quarters.
-    }
+  // Ensure the known-good URL is always included.
+  if (!candidates.includes('https://www.ici.org/statistical-report/ret_25_q3_data.xls')) {
+    candidates.push('https://www.ici.org/statistical-report/ret_25_q3_data.xls');
   }
+
+  // Fetch all candidates in parallel; pick the most-recent (lowest index) success.
+  const results = await Promise.allSettled(
+    candidates.map(async (url, idx) => {
+      const buffer = await fetchBuffer(url);
+      return { url, buffer, idx };
+    }),
+  );
+
+  const best = results
+    .filter((r): r is PromiseFulfilledResult<{ url: string; buffer: Buffer; idx: number }> => r.status === 'fulfilled')
+    .sort((a, b) => a.value.idx - b.value.idx)[0];
+
+  if (best) return { url: best.value.url, buffer: best.value.buffer };
 
   throw new Error('Could not locate a published ICI retirement workbook URL.');
 }
 
 async function fetchFredSeries(seriesId: string): Promise<Array<{ date: string; value: number }>> {
-  const csv = await fetchText(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${seriesId}`, 2);
+  const csv = await fetchText(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${seriesId}`, 0);
   return csv
     .trim()
     .split(/\r?\n/)
@@ -399,23 +410,26 @@ function capitalize(value: string): string {
 
 async function getLatestOpecAppendixUrl(): Promise<string> {
   const now = new Date();
+  const candidates: string[] = [];
 
-  for (let offset = 0; offset < 12; offset += 1) {
+  for (let offset = 0; offset < 6; offset += 1) {
     const candidateDate = new Date(now.getFullYear(), now.getMonth() - offset, 1);
     const month = candidateDate.toLocaleString('en-US', { month: 'long' }).toLowerCase();
     const year = candidateDate.getFullYear();
-    const candidateUrl = `https://www.opec.org/assets/assetdb/momr-appendix-${month}-${year}.xlsx`;
-
-    try {
-      if (await canFetch(candidateUrl)) {
-        return candidateUrl;
-      }
-    } catch {
-      // Try the previous month.
-    }
+    candidates.push(`https://www.opec.org/assets/assetdb/momr-appendix-${month}-${year}.xlsx`);
   }
 
-  throw new Error('Could not locate a recent OPEC appendix workbook.');
+  // Probe all candidates in parallel; return the first reachable URL.
+  try {
+    return await Promise.any(
+      candidates.map(async (url) => {
+        if (await canFetch(url)) return url;
+        throw new Error(`Not reachable: ${url}`);
+      }),
+    );
+  } catch {
+    throw new Error('Could not locate a recent OPEC appendix workbook.');
+  }
 }
 
 async function canFetch(url: string): Promise<boolean> {

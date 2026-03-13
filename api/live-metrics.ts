@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'http';
-import { getLiveMetrics } from '../live-metrics.server.js';
+import { getLiveMetrics } from '../live-metrics.server';
 
 export default async function handler(_req: IncomingMessage, res: ServerResponse) {
   try {
