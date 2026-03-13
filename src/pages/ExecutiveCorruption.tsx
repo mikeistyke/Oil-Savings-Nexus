@@ -6,7 +6,7 @@ import { ExecutiveCorruptionProvider } from '../context/ExecutiveCorruptionConte
 import { useExecutiveCorruption } from '../hooks/useExecutiveCorruption';
 
 function ExecutiveCorruptionContent() {
-  const { thesis, sections, sources } = useExecutiveCorruption();
+  const { title, byline, intro, thesis, sections, sources } = useExecutiveCorruption();
 
   return (
     <div className="w-full">
@@ -14,11 +14,12 @@ function ExecutiveCorruptionContent() {
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
           <div className="mb-4 flex items-center gap-3">
             <ShieldAlert className="h-8 w-8 text-rose-600" />
-            <h2 className="text-3xl font-bold text-slate-900 md:text-4xl">Executive Corruption</h2>
+            <h2 className="text-3xl font-bold text-slate-900 md:text-4xl">{title}</h2>
           </div>
           <p className="max-w-4xl text-lg leading-relaxed text-slate-600">
-            A sourced essay on how coercive presidential foreign-policy styles can intensify oil-market disruption and shift the cost of that instability onto the American middle class.
+            {intro}
           </p>
+          <p className="mt-4 text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">{byline}</p>
         </motion.div>
       </section>
 
@@ -38,8 +39,8 @@ function ExecutiveCorruptionContent() {
 
       <div className="mb-12 grid gap-8 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.8fr)]">
         <div className="space-y-8">
-          {sections.map((section) => (
-            <EssaySection key={section.id} section={section} />
+          {sections.map((section, index) => (
+            <EssaySection key={section.id} section={section} emphasizeLeadWord={index === 0} />
           ))}
         </div>
 

@@ -1,13 +1,19 @@
 import React, { createContext, useMemo } from 'react';
 import {
+  executiveCorruptionByline,
+  executiveCorruptionIntro,
   executiveCorruptionSections,
   executiveCorruptionSources,
   executiveCorruptionThesis,
+  executiveCorruptionTitle,
   type ExecutiveCorruptionSection,
   type ExecutiveCorruptionSource,
 } from '../content/executiveCorruption';
 
 export interface ExecutiveCorruptionContextValue {
+  title: string;
+  byline: string;
+  intro: string;
   thesis: string;
   sections: ExecutiveCorruptionSection[];
   sources: ExecutiveCorruptionSource[];
@@ -21,6 +27,9 @@ interface ExecutiveCorruptionProviderProps {
 
 export function ExecutiveCorruptionProvider({ children }: ExecutiveCorruptionProviderProps) {
   const value = useMemo<ExecutiveCorruptionContextValue>(() => ({
+    title: executiveCorruptionTitle,
+    byline: executiveCorruptionByline,
+    intro: executiveCorruptionIntro,
     thesis: executiveCorruptionThesis,
     sections: executiveCorruptionSections,
     sources: executiveCorruptionSources,
