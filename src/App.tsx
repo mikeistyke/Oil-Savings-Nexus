@@ -458,6 +458,15 @@ export default function App() {
                   Open Analysis
                 </button>
               </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab('executive corruption')}
+                className="mt-5 block max-w-3xl text-left"
+              >
+                <span className="text-base italic leading-8 text-slate-600 transition-colors hover:text-slate-900">
+                  "What if those wild swings at the pump-30 cents overnight after a Hormuz flare-up-aren't just annoying, but a direct hit on your 401(k)? That's no exaggeration: oil surges to $119/barrel following the Iran interference shaved 1%+ off the S&amp;P and NASDAQ, fueling inflation that erodes retirement gains before you even withdraw. From my Shenandoah receipt to your portfolio, it's the same volatile thread."
+                </span>
+              </button>
             </div>
             <div className="bg-slate-900 text-white p-8 rounded-3xl shadow-2xl relative overflow-hidden">
               <div className="relative z-10">
