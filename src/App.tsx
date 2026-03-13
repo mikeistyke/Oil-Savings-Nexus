@@ -73,25 +73,23 @@ const StatCard = ({
       )}
       <span className="text-slate-400 text-xs">{subValue}</span>
     </div>
-    {sourceLabel && sourceHref && (
-      <div className="mt-4 border-t border-slate-100 pt-3">
-        <a
-          href={sourceHref}
-          target="_blank"
-          rel="noreferrer"
-          className="text-[11px] font-medium text-slate-500 underline decoration-slate-300 underline-offset-2 hover:text-slate-700"
-        >
-          Source: {sourceLabel}
-        </a>
-        <p className="mt-2 text-[11px] text-slate-400">
-          Published: {publishedAt || 'N/A'}
-        </p>
-        <p className="text-[11px] text-slate-400">
-          Synced: {formatSyncLabel(syncedAt)}
-        </p>
-        {note && <p className="mt-2 text-[11px] leading-relaxed text-slate-500">{note}</p>}
-      </div>
-    )}
+    <div className="mt-4 border-t border-slate-100 pt-3">
+      <a
+        href={sourceHref}
+        target="_blank"
+        rel="noreferrer"
+        className="text-[11px] font-medium text-slate-500 underline decoration-slate-300 underline-offset-2 hover:text-slate-700"
+      >
+        Source: {sourceLabel}
+      </a>
+      <p className="mt-2 text-[11px] text-slate-400">
+        Published: {publishedAt || 'N/A'}
+      </p>
+      <p className="text-[11px] text-slate-400">
+        Synced: {formatSyncLabel(syncedAt)}
+      </p>
+      {note && <p className="mt-2 text-[11px] leading-relaxed text-slate-500">{note}</p>}
+    </div>
   </motion.div>
 );
 
