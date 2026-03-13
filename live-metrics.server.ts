@@ -36,49 +36,48 @@ export async function getLiveMetrics(): Promise<LiveMetricsResponse> {
 
   const syncedAt = new Date().toISOString();
 
-  const wtiMetric = await safeMetric(() => getWtiMetric(syncedAt), {
-    title: 'Crude Price Index',
-    value: 0,
-    displayValue: 'N/A',
-    subValue: 'WTI Crude',
-    trend: 0,
-    sourceLabel: 'FRED WTI Spot Price',
-    sourceHref: 'https://fred.stlouisfed.org/series/DCOILWTICO',
-    sourceFrequency: 'Daily',
-    publishedAt: 'Unavailable',
-    syncedAt,
-    note: 'Live fetch failed; retry on next sync cycle.',
-  });
-
-  const inflationMetric = await safeMetric(() => getInflationMetric(syncedAt), {
-    title: 'Inflation Pressure',
-    value: 0,
-    displayValue: 'N/A',
-    subValue: 'Energy CPI YoY',
-    trend: 0,
-    sourceLabel: 'FRED CPI Energy Index',
-    sourceHref: 'https://fred.stlouisfed.org/series/CPIENGSL',
-    sourceFrequency: 'Monthly',
-    publishedAt: 'Unavailable',
-    syncedAt,
-    note: 'Live fetch failed; retry on next sync cycle.',
-  });
-
-  const oilDemandMetric = await safeMetric(() => getOilDemandMetric(syncedAt), {
-    title: 'Global Oil Consumption',
-    value: 0,
-    displayValue: 'N/A',
-    subValue: 'Barrels / Day',
-    trend: 0,
-    sourceLabel: 'OPEC MOMR Appendix',
-    sourceHref: 'https://www.opec.org/monthly-oil-market-report.html',
-    sourceFrequency: 'Monthly',
-    publishedAt: 'Unavailable',
-    syncedAt,
-    note: 'Live fetch failed; retry on next sync cycle.',
-  });
-
-  const retirementMetrics = await safeRetirementMetrics(syncedAt);
+  const [wtiMetric, inflationMetric, oilDemandMetric, retirementMetrics] = await Promise.all([
+    safeMetric(() => getWtiMetric(syncedAt), {
+      title: 'Crude Price Index',
+      value: 0,
+      displayValue: 'N/A',
+      subValue: 'WTI Crude',
+      trend: 0,
+      sourceLabel: 'FRED WTI Spot Price',
+      sourceHref: 'https://fred.stlouisfed.org/series/DCOILWTICO',
+      sourceFrequency: 'Daily',
+      publishedAt: 'Unavailable',
+      syncedAt,
+      note: 'Live fetch failed; retry on next sync cycle.',
+    }),
+    safeMetric(() => getInflationMetric(syncedAt), {
+      title: 'Inflation Pressure',
+      value: 0,
+      displayValue: 'N/A',
+      subValue: 'Energy CPI YoY',
+      trend: 0,
+      sourceLabel: 'FRED CPI Energy Index',
+      sourceHref: 'https://fred.stlouisfed.org/series/CPIENGSL',
+      sourceFrequency: 'Monthly',
+      publishedAt: 'Unavailable',
+      syncedAt,
+      note: 'Live fetch failed; retry on next sync cycle.',
+    }),
+    safeMetric(() => getOilDemandMetric(syncedAt), {
+      title: 'Global Oil Consumption',
+      value: 0,
+      displayValue: 'N/A',
+      subValue: 'Barrels / Day',
+      trend: 0,
+      sourceLabel: 'OPEC MOMR Appendix',
+      sourceHref: 'https://www.opec.org/monthly-oil-market-report.html',
+      sourceFrequency: 'Monthly',
+      publishedAt: 'Unavailable',
+      syncedAt,
+      note: 'Live fetch failed; retry on next sync cycle.',
+    }),
+    safeRetirementMetrics(syncedAt),
+  ]);
 
   const response: LiveMetricsResponse = {
     syncedAt,

@@ -43,6 +43,7 @@ const StatCard = ({
   publishedAt,
   syncedAt,
   note,
+  loading,
 }: any) => (
   <motion.div 
     initial={{ opacity: 0, y: 20 }}
@@ -65,7 +66,11 @@ const StatCard = ({
     </div>
     <h3 className="text-slate-500 text-sm font-medium">{title}</h3>
     <div className="mt-1 flex items-baseline gap-2">
-      <span className="text-2xl font-bold text-slate-900">{value}</span>
+      {loading ? (
+        <span className="h-7 w-24 animate-pulse rounded bg-slate-200 inline-block" />
+      ) : (
+        <span className="text-2xl font-bold text-slate-900">{value}</span>
+      )}
       <span className="text-slate-400 text-xs">{subValue}</span>
     </div>
     {sourceLabel && sourceHref && (
@@ -120,16 +125,19 @@ export default function App() {
   const loadLiveMetrics = useCallback(async () => {
     setIsRefreshingMetrics(true);
     try {
-      const response = await fetch('/api/live-metrics');
+      const response = await fetch('/api/live-metrics', {
+        signal: AbortSignal.timeout(35000),
+      });
       if (!response.ok) {
-        throw new Error(`Live metrics request failed with ${response.status}`);
+        throw new Error(`Live metrics responded ${response.status}`);
       }
-
       const payload: LiveMetricsResponse = await response.json();
       setLiveMetrics(payload);
       setLiveMetricsError(null);
     } catch (error) {
-      setLiveMetricsError(error instanceof Error ? error.message : 'Could not load live metrics.');
+      const msg = error instanceof Error ? error.message : 'Could not load live metrics.';
+      setLiveMetricsError(msg);
+      console.error('[live-metrics] fetch failed:', msg);
     } finally {
       setIsRefreshingMetrics(false);
     }
@@ -255,9 +263,14 @@ export default function App() {
             {isRefreshingMetrics ? 'Refreshing...' : 'Refresh now'}
           </button>
         </div>
+        {isRefreshingMetrics && !liveMetrics && (
+          <div className="mb-4 rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-700">
+            Syncing live data from OPEC, ICI, and FRED — this can take up to 15 seconds on first load…
+          </div>
+        )}
         {liveMetricsError && (
           <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Live metrics unavailable right now. The page is showing local fallback values until the next successful sync.
+            Live metrics unavailable: {liveMetricsError}. Showing local fallback values.
           </div>
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
@@ -273,6 +286,7 @@ export default function App() {
             publishedAt={cardOilConsumption?.publishedAt}
             syncedAt={cardOilConsumption?.syncedAt}
             note={cardOilConsumption?.note}
+            loading={isRefreshingMetrics && !liveMetrics}
           />
           <StatCard 
             title={cardOilPrice?.title || 'Crude Price Index'} 
@@ -286,6 +300,7 @@ export default function App() {
             publishedAt={cardOilPrice?.publishedAt}
             syncedAt={cardOilPrice?.syncedAt}
             note={cardOilPrice?.note}
+            loading={isRefreshingMetrics && !liveMetrics}
           />
           <StatCard 
             title={cardTotalRetirement?.title || 'Total Retirement Assets'} 
@@ -299,6 +314,7 @@ export default function App() {
             publishedAt={cardTotalRetirement?.publishedAt}
             syncedAt={cardTotalRetirement?.syncedAt}
             note={cardTotalRetirement?.note}
+            loading={isRefreshingMetrics && !liveMetrics}
           />
           <StatCard 
             title={cardRetirementIndex?.title || 'Retirement Index'} 
@@ -312,6 +328,7 @@ export default function App() {
             publishedAt={cardRetirementIndex?.publishedAt}
             syncedAt={cardRetirementIndex?.syncedAt}
             note={cardRetirementIndex?.note}
+            loading={isRefreshingMetrics && !liveMetrics}
           />
           <StatCard 
             title={cardInflation?.title || 'Inflation Pressure'} 
@@ -325,6 +342,7 @@ export default function App() {
             publishedAt={cardInflation?.publishedAt}
             syncedAt={cardInflation?.syncedAt}
             note={cardInflation?.note}
+            loading={isRefreshingMetrics && !liveMetrics}
           />
         </div>
 
