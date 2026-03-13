@@ -376,7 +376,12 @@ export default function App() {
   const cardRetirementIndex = liveMetrics?.metrics.retirementIndex;
   const cardInflation = liveMetrics?.metrics.inflationPressure;
 
-  const heroOilPriceValue = cardOilPrice ? cardOilPrice.displayValue.replace('$', '') : `${latest.oilPrice}`;
+  const liveOilPriceValue = cardOilPrice && Number.isFinite(cardOilPrice.value) && cardOilPrice.value > 0
+    ? cardOilPrice.value
+    : null;
+  const currentOilPrice = liveOilPriceValue ?? latest.oilPrice;
+
+  const heroOilPriceValue = currentOilPrice.toFixed(2);
   const heroWealthDelta = cardRetirementIndex ? `${cardRetirementIndex.trend.toFixed(1)}` : wealthChange;
 
   return (
@@ -861,13 +866,13 @@ export default function App() {
                 <div className="space-y-4">
                   <div className={cn(
                     "p-4 rounded-2xl border transition-all duration-500",
-                    latest.oilPrice < 100 
+                    currentOilPrice < 100 
                       ? "bg-emerald-50 border-emerald-200 shadow-sm" 
                       : "bg-slate-50 border-slate-100 opacity-50 grayscale"
                   )}>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-bold text-emerald-700">&lt; $100 Per Barrel</span>
-                      {latest.oilPrice < 100 && <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />}
+                      {currentOilPrice < 100 && <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />}
                     </div>
                     <p className="text-xs text-emerald-600 leading-tight">
                       Manageable inflation. Retirement accounts maintain 4-6% growth trajectory as corporate margins remain stable.
@@ -876,13 +881,13 @@ export default function App() {
 
                   <div className={cn(
                     "p-4 rounded-2xl border transition-all duration-500",
-                    latest.oilPrice >= 100 
+                    currentOilPrice >= 100 
                       ? "bg-rose-50 border-rose-200 shadow-sm" 
                       : "bg-slate-50 border-slate-100 opacity-50 grayscale"
                   )}>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-bold text-rose-700">&gt; $100 Per Barrel</span>
-                      {latest.oilPrice >= 100 && <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />}
+                      {currentOilPrice >= 100 && <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />}
                     </div>
                     <p className="text-xs text-rose-600 leading-tight">
                       Critical Stagnation. Energy costs trigger broad-market sell-offs, potentially erasing 12-18 months of retirement gains.
@@ -894,16 +899,19 @@ export default function App() {
               <div className="flex flex-col items-center justify-center p-8 bg-slate-50 rounded-[2rem] border border-slate-100">
                 <div className="text-center mb-6">
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Current Trajectory</p>
-                  <div className="text-5xl font-black text-slate-900">${latest.oilPrice}</div>
+                  <div className="text-5xl font-black text-slate-900">${currentOilPrice.toFixed(2)}</div>
+                  <p className="mt-2 text-[11px] text-slate-500">
+                    Synced: {formatSyncLabel(cardOilPrice?.syncedAt ?? liveMetrics?.syncedAt)}
+                  </p>
                 </div>
                 
                 <div className="w-full h-4 bg-slate-200 rounded-full relative overflow-hidden mb-4">
                   <motion.div 
                     initial={{ width: 0 }}
-                    animate={{ width: `${Math.min((latest.oilPrice / 150) * 100, 100)}%` }}
+                    animate={{ width: `${Math.min((currentOilPrice / 150) * 100, 100)}%` }}
                     className={cn(
                       "h-full transition-colors duration-500",
-                      latest.oilPrice < 100 ? "bg-emerald-500" : "bg-rose-500"
+                      currentOilPrice < 100 ? "bg-emerald-500" : "bg-rose-500"
                     )}
                   />
                   <div className="absolute left-[66.6%] top-0 w-1 h-full bg-slate-900 z-20" title="$100 Threshold" />
@@ -917,7 +925,7 @@ export default function App() {
                 
                 <div className="mt-8 text-center">
                   <p className="text-xs text-slate-500 italic">
-                    {latest.oilPrice < 100 
+                    {currentOilPrice < 100 
                       ? "Currently in the 'Stability Zone', but trending toward the critical threshold."
                       : "Threshold breached. Market volatility and retirement depletion risks are at maximum."}
                   </p>
@@ -935,7 +943,7 @@ export default function App() {
           <div className="max-w-3xl relative z-10">
             <h3 className="text-3xl font-bold mb-6">The "Self-Inflicted" War for Oil</h3>
             <p className="text-slate-400 text-lg leading-relaxed mb-8">
-              The data from the last 15 months suggests that the aggressive pivot back to fossil-fuel dominance has not yielded the promised "wealth explosion" for middle America. Instead, the increased global consumption—fueled by a lack of diversification—has created a supply-demand trap. As oil prices climbed from $75 to over ${latest.oilPrice}, the average 401(k) has struggled to outpace energy-driven inflation.
+              The data from the last 15 months suggests that the aggressive pivot back to fossil-fuel dominance has not yielded the promised "wealth explosion" for middle America. Instead, the increased global consumption—fueled by a lack of diversification—has created a supply-demand trap. As oil prices climbed from $75 to over ${currentOilPrice.toFixed(2)}, the average 401(k) has struggled to outpace energy-driven inflation.
             </p>
             <div className="grid grid-cols-2 gap-8">
               <div>
