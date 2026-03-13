@@ -267,6 +267,12 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
+const BlueskyIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 600 530" fill="currentColor" aria-hidden="true" className={className}>
+    <path d="m133 44c70 53 145 159 167 205 22-46 97-152 167-205 51-39 133-69 133 25 0 19-11 161-17 184-21 80-96 100-163 89 117 20 147 86 83 152-122 124-175-31-188-71-2-6-3-8-5-8s-3 2-5 8c-13 40-66 195-188 71-64-66-34-132 83-152-67 11-142-9-163-89-6-23-17-165-17-184 0-94 82-64 133-25z" />
+  </svg>
+);
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('overview');
   const [liveMetrics, setLiveMetrics] = useState<LiveMetricsResponse | null>(null);
@@ -1050,6 +1056,15 @@ export default function App() {
                 aria-label="Oil Savings Nexus Facebook group"
               >
                 <Facebook className="w-5 h-5" />
+              </a>
+              <a
+                href="https://bsky.app/profile/tykec.bsky.social"
+                target="_blank"
+                rel="noreferrer"
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+                aria-label="Oil Savings Nexus Bluesky profile"
+              >
+                <BlueskyIcon className="w-5 h-5" />
               </a>
             </div>
             <div className="flex flex-wrap justify-center gap-4 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 md:justify-end">
