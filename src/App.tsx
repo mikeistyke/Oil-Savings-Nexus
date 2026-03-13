@@ -51,6 +51,25 @@ const normalizeMetric = (metric: any, fallbackSyncedAt?: string): LiveMetric | n
   };
 };
 
+const fallbackMetric = (
+  title: string,
+  subValue: string,
+  sourceLabel: string,
+  sourceHref: string,
+  syncedAt: string,
+): LiveMetric => ({
+  title,
+  value: 0,
+  displayValue: 'N/A',
+  subValue,
+  trend: 0,
+  sourceLabel,
+  sourceHref,
+  sourceFrequency: 'Unknown',
+  publishedAt: 'N/A',
+  syncedAt,
+});
+
 const normalizeLiveMetrics = (payload: unknown): LiveMetricsResponse | null => {
   if (!payload || typeof payload !== 'object') {
     return null;
@@ -70,27 +89,53 @@ const normalizeLiveMetrics = (payload: unknown): LiveMetricsResponse | null => {
   const oilConsumption = normalizeMetric(
     metrics.oilConsumption ?? metrics.oil_consumption,
     syncedAt,
+  ) ?? fallbackMetric(
+    'Global Oil Consumption',
+    'Barrels / Day',
+    'OPEC MOMR Appendix',
+    'https://www.opec.org/monthly-oil-market-report.html',
+    syncedAt,
   );
   const oilPrice = normalizeMetric(
     metrics.oilPrice ?? metrics.oil_price,
+    syncedAt,
+  ) ?? fallbackMetric(
+    'Crude Price Index',
+    'WTI Crude',
+    'FRED WTI Spot Price',
+    'https://fred.stlouisfed.org/series/DCOILWTICO',
     syncedAt,
   );
   const totalRetirementAssets = normalizeMetric(
     metrics.totalRetirementAssets ?? metrics.total_retirement_assets,
     syncedAt,
+  ) ?? fallbackMetric(
+    'Total Retirement Assets',
+    'US Total (401k/IRA)',
+    'ICI US Retirement Market',
+    'https://www.ici.org/research/stats/retirement',
+    syncedAt,
   );
   const retirementIndex = normalizeMetric(
     metrics.retirementIndex ?? metrics.retirement_index,
+    syncedAt,
+  ) ?? fallbackMetric(
+    'Retirement Index',
+    'Growth Benchmark',
+    'Computed from ICI Table 1',
+    'https://www.ici.org/research/stats/retirement',
     syncedAt,
   );
   const inflationPressure = normalizeMetric(
     metrics.inflationPressure ?? metrics.inflation_pressure,
     syncedAt,
+  ) ?? fallbackMetric(
+    'Inflation Pressure',
+    'Energy CPI YoY',
+    'FRED CPI Energy Index',
+    'https://fred.stlouisfed.org/series/CPIENGSL',
+    syncedAt,
   );
-
-  if (!oilConsumption || !oilPrice || !totalRetirementAssets || !retirementIndex || !inflationPressure) {
-    return null;
-  }
 
   return {
     syncedAt,
@@ -201,7 +246,14 @@ export default function App() {
         signal: AbortSignal.timeout(35000),
       });
       if (!response.ok) {
-        throw new Error(`Live metrics responded ${response.status}`);
+        let apiMessage = '';
+        try {
+          const errorPayload = await response.json();
+          apiMessage = errorPayload?.message ? `: ${errorPayload.message}` : '';
+        } catch {
+          // Ignore body parse failures; keep status-level error.
+        }
+        throw new Error(`Live metrics responded ${response.status}${apiMessage}`);
       }
       const rawPayload: unknown = await response.json();
       const payload = normalizeLiveMetrics(rawPayload);
