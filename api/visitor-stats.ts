@@ -39,13 +39,13 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
   try {
     if (req.method === 'GET') {
-      res.end(JSON.stringify(getVisitorStats()));
+      res.end(JSON.stringify(await getVisitorStats()));
       return;
     }
 
     if (req.method === 'POST') {
       const payload = await readJsonBody(req) as RecordVisitRequest;
-      const stats = recordVisit({
+      const stats = await recordVisit({
         path: payload.path,
         visitorId: payload.visitorId,
         ipAddress: getIpAddress(req),

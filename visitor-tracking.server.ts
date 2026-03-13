@@ -3,6 +3,7 @@ import { createHash } from 'crypto';
 import { mkdirSync } from 'fs';
 import { dirname, join } from 'path';
 import { tmpdir } from 'os';
+import { hasKvRestStorage, runKvCommand } from './kv-rest.server.js';
 import type { VisitorStatsResponse } from './src/lib/visitorStats.js';
 
 interface RecordVisitParams {
@@ -27,7 +28,7 @@ function getDatabasePath() {
 }
 
 function isPersistentStorage() {
-  return !process.env.VERCEL || Boolean(process.env.VISITOR_DB_PATH);
+  return hasKvRestStorage() || !process.env.VERCEL || Boolean(process.env.VISITOR_DB_PATH);
 }
 
 function getDatabase() {
@@ -86,7 +87,26 @@ function isBot(userAgent?: string) {
   return /bot|spider|crawl|preview|slurp|wget|curl/i.test(userAgent);
 }
 
-export function getVisitorStats(): VisitorStatsResponse {
+async function getVisitorStatsFromKv(): Promise<VisitorStatsResponse> {
+  const [totalHits, uniqueVisitors, lastHitAt] = await Promise.all([
+    runKvCommand<number>(['GET', 'analytics:visitors:totalHits']),
+    runKvCommand<number>(['SCARD', 'analytics:visitors:uniqueVisitors']),
+    runKvCommand<string | null>(['GET', 'analytics:visitors:lastHitAt']),
+  ]);
+
+  return {
+    totalHits: Number(totalHits ?? 0),
+    uniqueVisitors: Number(uniqueVisitors ?? 0),
+    lastHitAt: lastHitAt ?? null,
+    persistentStorage: true,
+  };
+}
+
+export async function getVisitorStats(): Promise<VisitorStatsResponse> {
+  if (hasKvRestStorage()) {
+    return getVisitorStatsFromKv();
+  }
+
   const db = getDatabase();
   const stats = db.prepare(`
     SELECT
@@ -108,9 +128,22 @@ export function getVisitorStats(): VisitorStatsResponse {
   };
 }
 
-export function recordVisit(params: RecordVisitParams): VisitorStatsResponse {
+export async function recordVisit(params: RecordVisitParams): Promise<VisitorStatsResponse> {
   if (isBot(params.userAgent)) {
     return getVisitorStats();
+  }
+
+  if (hasKvRestStorage()) {
+    const visitorId = resolveVisitorId(params);
+    const visitedAt = new Date().toISOString();
+
+    await Promise.all([
+      runKvCommand(['INCR', 'analytics:visitors:totalHits']),
+      runKvCommand(['SADD', 'analytics:visitors:uniqueVisitors', visitorId]),
+      runKvCommand(['SET', 'analytics:visitors:lastHitAt', visitedAt]),
+    ]);
+
+    return getVisitorStatsFromKv();
   }
 
   const db = getDatabase();

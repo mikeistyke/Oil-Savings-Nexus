@@ -3,6 +3,7 @@ import { createHash } from 'crypto';
 import { mkdirSync } from 'fs';
 import { dirname, join } from 'path';
 import { tmpdir } from 'os';
+import { hasKvRestStorage, parseSortedSetResult, runKvCommand } from './kv-rest.server.js';
 import type { AffiliateAnalyticsResponse, RecordAffiliateClickRequest } from './src/lib/affiliateClicks.js';
 
 interface RecordAffiliateClickParams extends RecordAffiliateClickRequest {
@@ -25,7 +26,7 @@ function getDatabasePath() {
 }
 
 function isPersistentStorage() {
-  return !process.env.VERCEL || Boolean(process.env.AFFILIATE_DB_PATH);
+  return hasKvRestStorage() || !process.env.VERCEL || Boolean(process.env.AFFILIATE_DB_PATH);
 }
 
 function getDatabase() {
@@ -106,7 +107,32 @@ function queryTopBy(field: 'page_id' | 'block_id' | 'item_title', alias: string)
   }));
 }
 
-export function getAffiliateAnalytics(): AffiliateAnalyticsResponse {
+async function getAffiliateAnalyticsFromKv(): Promise<AffiliateAnalyticsResponse> {
+  const [totalClicks, uniqueVisitors, lastClickAt, topPagesRaw, topBlocksRaw, topItemsRaw] = await Promise.all([
+    runKvCommand<number>(['GET', 'analytics:affiliate:totalClicks']),
+    runKvCommand<number>(['SCARD', 'analytics:affiliate:uniqueVisitors']),
+    runKvCommand<string | null>(['GET', 'analytics:affiliate:lastClickAt']),
+    runKvCommand<unknown>(['ZREVRANGE', 'analytics:affiliate:topPages', 0, 7, 'WITHSCORES']),
+    runKvCommand<unknown>(['ZREVRANGE', 'analytics:affiliate:topBlocks', 0, 7, 'WITHSCORES']),
+    runKvCommand<unknown>(['ZREVRANGE', 'analytics:affiliate:topItems', 0, 7, 'WITHSCORES']),
+  ]);
+
+  return {
+    totalClicks: Number(totalClicks ?? 0),
+    uniqueVisitors: Number(uniqueVisitors ?? 0),
+    lastClickAt: lastClickAt ?? null,
+    topPages: parseSortedSetResult(topPagesRaw),
+    topBlocks: parseSortedSetResult(topBlocksRaw),
+    topItems: parseSortedSetResult(topItemsRaw),
+    persistentStorage: true,
+  };
+}
+
+export async function getAffiliateAnalytics(): Promise<AffiliateAnalyticsResponse> {
+  if (hasKvRestStorage()) {
+    return getAffiliateAnalyticsFromKv();
+  }
+
   const db = getDatabase();
   const overview = db.prepare(`
     SELECT
@@ -131,9 +157,25 @@ export function getAffiliateAnalytics(): AffiliateAnalyticsResponse {
   };
 }
 
-export function recordAffiliateClick(params: RecordAffiliateClickParams): AffiliateAnalyticsResponse {
+export async function recordAffiliateClick(params: RecordAffiliateClickParams): Promise<AffiliateAnalyticsResponse> {
   if (isBot(params.userAgent)) {
     return getAffiliateAnalytics();
+  }
+
+  if (hasKvRestStorage()) {
+    const visitorId = resolveVisitorId(params);
+    const clickedAt = new Date().toISOString();
+
+    await Promise.all([
+      runKvCommand(['INCR', 'analytics:affiliate:totalClicks']),
+      runKvCommand(['SADD', 'analytics:affiliate:uniqueVisitors', visitorId]),
+      runKvCommand(['SET', 'analytics:affiliate:lastClickAt', clickedAt]),
+      runKvCommand(['ZINCRBY', 'analytics:affiliate:topPages', 1, params.pageId]),
+      runKvCommand(['ZINCRBY', 'analytics:affiliate:topBlocks', 1, params.blockId]),
+      runKvCommand(['ZINCRBY', 'analytics:affiliate:topItems', 1, params.itemTitle]),
+    ]);
+
+    return getAffiliateAnalyticsFromKv();
   }
 
   const db = getDatabase();

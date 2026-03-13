@@ -47,10 +47,10 @@ app.get('/api/live-metrics', async (_req, res) => {
   }
 });
 
-app.get('/api/visitor-stats', (_req, res) => {
+app.get('/api/visitor-stats', async (_req, res) => {
   try {
     res.setHeader('Cache-Control', 'no-store');
-    res.json(getVisitorStats());
+    res.json(await getVisitorStats());
   } catch (error) {
     res.status(500).json({
       message: error instanceof Error ? error.message : 'Unknown visitor-stats error',
@@ -58,9 +58,9 @@ app.get('/api/visitor-stats', (_req, res) => {
   }
 });
 
-app.post('/api/visitor-stats', (req, res) => {
+app.post('/api/visitor-stats', async (req, res) => {
   try {
-    const stats = recordVisit({
+    const stats = await recordVisit({
       path: req.body?.path,
       visitorId: req.body?.visitorId,
       ipAddress: req.headers['x-forwarded-for']?.toString() ?? req.socket.remoteAddress ?? '',
@@ -76,7 +76,7 @@ app.post('/api/visitor-stats', (req, res) => {
   }
 });
 
-app.get('/api/affiliate-clicks', (_req, res) => {
+app.get('/api/affiliate-clicks', async (_req, res) => {
   try {
     if (!isOwnerAuthorized(_req)) {
       res.status(401).json({ message: 'Unauthorized affiliate analytics access.' });
@@ -84,7 +84,7 @@ app.get('/api/affiliate-clicks', (_req, res) => {
     }
 
     res.setHeader('Cache-Control', 'no-store');
-    res.json(getAffiliateAnalytics());
+    res.json(await getAffiliateAnalytics());
   } catch (error) {
     res.status(500).json({
       message: error instanceof Error ? error.message : 'Unknown affiliate-clicks error',
@@ -92,14 +92,14 @@ app.get('/api/affiliate-clicks', (_req, res) => {
   }
 });
 
-app.post('/api/affiliate-clicks', (req, res) => {
+app.post('/api/affiliate-clicks', async (req, res) => {
   try {
     if (!req.body?.pageId || !req.body?.blockId || !req.body?.itemTitle || !req.body?.destinationUrl) {
       res.status(400).json({ message: 'Missing required affiliate click fields.' });
       return;
     }
 
-    const analytics = recordAffiliateClick({
+    const analytics = await recordAffiliateClick({
       pageId: req.body.pageId,
       blockId: req.body.blockId,
       itemTitle: req.body.itemTitle,

@@ -73,7 +73,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         return;
       }
 
-      res.end(JSON.stringify(getAffiliateAnalytics()));
+      res.end(JSON.stringify(await getAffiliateAnalytics()));
       return;
     }
 
@@ -87,7 +87,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         return;
       }
 
-      const stats = recordAffiliateClick({
+      const stats = await recordAffiliateClick({
         ...payload,
         ipAddress: getIpAddress(req),
         userAgent: req.headers['user-agent'] ?? '',

@@ -50,7 +50,12 @@ Affiliate cards in these areas send click events to `/api/affiliate-clicks`:
 
 By default, local/Node hosting persists analytics to SQLite in `data/affiliate-analytics.db`.
 
-On Vercel, analytics are ephemeral unless you set a persistent path:
+On Vercel, the recommended durable option is KV-backed analytics using these environment variables:
+
+1. `KV_REST_API_URL`
+2. `KV_REST_API_TOKEN`
+
+If KV is not configured, analytics are ephemeral unless you set a persistent path:
 
 1. `AFFILIATE_DB_PATH` for affiliate analytics
 2. `VISITOR_DB_PATH` for visitor metrics
@@ -64,14 +69,17 @@ On Vercel, analytics are ephemeral unless you set a persistent path:
 5. `AFFILIATE_DB_PATH` (optional for durable affiliate analytics)
 6. `VISITOR_DB_PATH` (optional for durable visitor metrics)
 7. `AFFILIATE_ANALYTICS_KEY` (required to restrict affiliate analytics to owner access)
+8. `KV_REST_API_URL` (recommended for durable Vercel analytics)
+9. `KV_REST_API_TOKEN` (recommended for durable Vercel analytics)
 
 ### Owner-Only Access Setup
 
 To lock affiliate analytics so only you can view it:
 
 1. Set `AFFILIATE_ANALYTICS_KEY` in your hosting environment (for example, Vercel Project Settings → Environment Variables).
-2. Redeploy.
-3. In the site UI, click `Affiliate Analytics` and enter that key when prompted.
+2. For durable hosted analytics on Vercel, connect Vercel KV and ensure `KV_REST_API_URL` and `KV_REST_API_TOKEN` are available.
+3. Redeploy.
+4. In the site UI, click `Affiliate Analytics` and enter that key when prompted.
 
 Notes:
 
