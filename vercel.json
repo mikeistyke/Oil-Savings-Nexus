@@ -4,6 +4,9 @@
   "functions": {
     "api/live-metrics.ts": {
       "maxDuration": 60
+    },
+    "api/visitor-stats.ts": {
+      "maxDuration": 10
     }
   },
   "rewrites": [

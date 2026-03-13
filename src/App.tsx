@@ -11,6 +11,7 @@ import { motion } from 'motion/react';
 import { generateNexusData, nexusNarrative } from './data';
 import { cn } from './lib/utils';
 import type { LiveMetric, LiveMetricsResponse } from './lib/liveMetrics';
+import type { VisitorStatsResponse } from './lib/visitorStats';
 import OilDynamics from './pages/OilDynamics';
 import RetirementImpact from './pages/RetirementImpact';
 import Analysis from './pages/Analysis';
@@ -21,6 +22,7 @@ const LIVE_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
 const LIVE_METRICS_TIMEOUT_MS = 35000;
 const MIN_REFRESH_INTERVAL_MS = 60 * 1000;
 const TAB_LABELS = ['Overview', 'Oil Dynamics', 'Retirement Impact', 'Analysis', 'Executive Corruption'] as const;
+const VISITOR_ID_STORAGE_KEY = 'oil-wealth-nexus-visitor-id';
 
 const formatRefreshInterval = (value: number) => {
   const hours = value / (60 * 60 * 1000);
@@ -251,6 +253,7 @@ export default function App() {
   const [liveMetricsError, setLiveMetricsError] = useState<string | null>(null);
   const [isRefreshingMetrics, setIsRefreshingMetrics] = useState(false);
   const [refreshIntervalMs, setRefreshIntervalMs] = useState(LIVE_REFRESH_INTERVAL_MS);
+  const [visitorStats, setVisitorStats] = useState<VisitorStatsResponse | null>(null);
 
   const latest = data[data.length - 1];
   const initial = data[0];
@@ -316,6 +319,53 @@ export default function App() {
       window.clearInterval(intervalId);
     };
   }, [loadLiveMetrics, refreshIntervalMs]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return;
+    }
+
+    const pageVisitKey = `oil-wealth-nexus-hit:${window.location.pathname}:${Math.floor(performance.timeOrigin)}`;
+    if (window.sessionStorage.getItem(pageVisitKey)) {
+      return;
+    }
+
+    window.sessionStorage.setItem(pageVisitKey, '1');
+
+    let visitorId = window.localStorage.getItem(VISITOR_ID_STORAGE_KEY);
+    if (!visitorId) {
+      visitorId = window.crypto.randomUUID();
+      window.localStorage.setItem(VISITOR_ID_STORAGE_KEY, visitorId);
+    }
+
+    void fetch('/api/visitor-stats', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        path: window.location.pathname,
+        visitorId,
+      }),
+      keepalive: true,
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`Visitor tracking responded ${response.status}`);
+        }
+
+        const payload = await response.json() as VisitorStatsResponse;
+        setVisitorStats(payload);
+      })
+      .catch((error) => {
+        console.error('[visitor-tracking] failed:', error);
+      });
+  }, []);
   
   const oilChange = (((latest.oilPrice - initial.oilPrice) / initial.oilPrice) * 100).toFixed(1);
   const wealthChange = (((latest.retirementIndex - initial.retirementIndex) / initial.retirementIndex) * 100).toFixed(1);
@@ -392,6 +442,22 @@ export default function App() {
               <p className="text-lg text-slate-600 leading-relaxed max-w-2xl">
                 Since January 2025, the shift in energy policy has triggered a global consumption surge that directly competes with the wealth-building capacity of American households. Explore the nexus between rising barrel prices and the depletion of retirement security.
               </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('executive corruption')}
+                  className="inline-flex items-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+                >
+                  Read Executive Corruption
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('analysis')}
+                  className="inline-flex items-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-400 hover:text-slate-900"
+                >
+                  Open Analysis
+                </button>
+              </div>
             </div>
             <div className="bg-slate-900 text-white p-8 rounded-3xl shadow-2xl relative overflow-hidden">
               <div className="relative z-10">
@@ -903,6 +969,11 @@ export default function App() {
               <span className="text-slate-500 text-sm font-medium">Oil & Wealth Nexus Dashboard © 2026</span>
               <span className="text-indigo-600 text-xs font-bold uppercase tracking-widest">A Middle-Class Empowerment Voice</span>
               <span className="text-slate-400 text-[10px] font-medium italic mt-0.5">Brought to you by Mike Cirigliano</span>
+              {visitorStats && (
+                <span className="text-slate-400 text-[10px] font-medium mt-1">
+                  External visits tracked: {visitorStats.totalHits} total, {visitorStats.uniqueVisitors} unique visitors
+                </span>
+              )}
             </div>
           </div>
           <div className="flex gap-6">

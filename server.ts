@@ -8,9 +8,12 @@ import { createRequire } from 'module';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { getLiveMetrics } from './live-metrics.server.js';
+import { getVisitorStats, recordVisit } from './visitor-tracking.server.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
+
+app.use(express.json());
 
 // ── Live metrics API ────────────────────────────────────────────────────────
 app.get('/api/live-metrics', async (_req, res) => {
@@ -21,6 +24,35 @@ app.get('/api/live-metrics', async (_req, res) => {
   } catch (error) {
     res.status(500).json({
       message: error instanceof Error ? error.message : 'Unknown live-metrics error',
+    });
+  }
+});
+
+app.get('/api/visitor-stats', (_req, res) => {
+  try {
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(getVisitorStats());
+  } catch (error) {
+    res.status(500).json({
+      message: error instanceof Error ? error.message : 'Unknown visitor-stats error',
+    });
+  }
+});
+
+app.post('/api/visitor-stats', (req, res) => {
+  try {
+    const stats = recordVisit({
+      path: req.body?.path,
+      visitorId: req.body?.visitorId,
+      ipAddress: req.headers['x-forwarded-for']?.toString() ?? req.socket.remoteAddress ?? '',
+      userAgent: req.headers['user-agent'] ?? '',
+    });
+
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(stats);
+  } catch (error) {
+    res.status(500).json({
+      message: error instanceof Error ? error.message : 'Unknown visitor-stats error',
     });
   }
 });
