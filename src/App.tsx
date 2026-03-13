@@ -5,7 +5,7 @@ import {
 } from 'recharts';
 import { 
   TrendingUp, TrendingDown, Droplets, Wallet, AlertTriangle, 
-  Info, ArrowUpRight, ArrowDownRight, Activity, Globe, Zap
+  Info, ArrowUpRight, ArrowDownRight, Activity, Globe, Zap, Facebook
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { generateNexusData, nexusNarrative } from './data';
@@ -1042,6 +1042,15 @@ export default function App() {
               <a href="#" className="text-slate-400 hover:text-slate-600 transition-colors"><Globe className="w-5 h-5" /></a>
               <a href="#" className="text-slate-400 hover:text-slate-600 transition-colors"><Droplets className="w-5 h-5" /></a>
               <a href="#" className="text-slate-400 hover:text-slate-600 transition-colors"><Wallet className="w-5 h-5" /></a>
+              <a
+                href="https://www.facebook.com/groups/oilsavingsnexus/"
+                target="_blank"
+                rel="noreferrer"
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+                aria-label="Oil Savings Nexus Facebook group"
+              >
+                <Facebook className="w-5 h-5" />
+              </a>
             </div>
             <div className="flex flex-wrap justify-center gap-4 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 md:justify-end">
               <button type="button" onClick={() => setActiveTab('privacy policy')} className="hover:text-slate-900 transition-colors">Privacy Policy</button>
