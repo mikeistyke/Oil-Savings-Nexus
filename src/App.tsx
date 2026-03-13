@@ -18,7 +18,19 @@ import Analysis from './pages/Analysis';
 const data = generateNexusData();
 const LIVE_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
 const LIVE_METRICS_TIMEOUT_MS = 35000;
+const MIN_REFRESH_INTERVAL_MS = 60 * 1000;
 const TAB_LABELS = ['Overview', 'Oil Dynamics', 'Retirement Impact', 'Analysis'] as const;
+
+const formatRefreshInterval = (value: number) => {
+  const hours = value / (60 * 60 * 1000);
+
+  if (hours >= 1) {
+    return `${hours.toFixed(hours >= 10 ? 0 : 1)} hour${hours >= 2 ? 's' : ''}`;
+  }
+
+  const minutes = Math.max(1, Math.round(value / (60 * 1000)));
+  return `${minutes} minute${minutes === 1 ? '' : 's'}`;
+};
 
 const formatSyncLabel = (value?: string) => {
   if (!value) {
@@ -237,6 +249,7 @@ export default function App() {
   const [liveMetrics, setLiveMetrics] = useState<LiveMetricsResponse | null>(null);
   const [liveMetricsError, setLiveMetricsError] = useState<string | null>(null);
   const [isRefreshingMetrics, setIsRefreshingMetrics] = useState(false);
+  const [refreshIntervalMs, setRefreshIntervalMs] = useState(LIVE_REFRESH_INTERVAL_MS);
 
   const latest = data[data.length - 1];
   const initial = data[0];
@@ -277,7 +290,13 @@ export default function App() {
       if (!payload) {
         throw new Error('Live metrics payload shape was invalid.');
       }
+
+      const nextRefreshInterval = Number.isFinite(payload.refreshIntervalMs)
+        ? Math.max(MIN_REFRESH_INTERVAL_MS, payload.refreshIntervalMs)
+        : LIVE_REFRESH_INTERVAL_MS;
+
       setLiveMetrics(payload);
+      setRefreshIntervalMs(nextRefreshInterval);
       setLiveMetricsError(null);
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Could not load live metrics.';
@@ -290,12 +309,12 @@ export default function App() {
 
   useEffect(() => {
     loadLiveMetrics();
-    const intervalId = window.setInterval(loadLiveMetrics, LIVE_REFRESH_INTERVAL_MS);
+    const intervalId = window.setInterval(loadLiveMetrics, refreshIntervalMs);
 
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [loadLiveMetrics]);
+  }, [loadLiveMetrics, refreshIntervalMs]);
   
   const oilChange = (((latest.oilPrice - initial.oilPrice) / initial.oilPrice) * 100).toFixed(1);
   const wealthChange = (((latest.retirementIndex - initial.retirementIndex) / initial.retirementIndex) * 100).toFixed(1);
@@ -402,7 +421,7 @@ export default function App() {
         <div className="mb-4 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-sm text-slate-500">
-              Hero cards sync from public sources on load and every 6 hours while this page is open.
+              Hero cards sync from public sources on load and every {formatRefreshInterval(refreshIntervalMs)} while this page is open.
             </p>
             <p className="text-xs text-slate-400">
               Source cadence: oil price daily, energy CPI monthly, OPEC monthly, retirement assets quarterly.
