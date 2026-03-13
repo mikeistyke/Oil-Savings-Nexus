@@ -12,6 +12,7 @@ import { generateNexusData, nexusNarrative } from './data';
 import { cn } from './lib/utils';
 import type { LiveMetric, LiveMetricsResponse } from './lib/liveMetrics';
 import type { VisitorStatsResponse } from './lib/visitorStats';
+import AdSlot from './components/AdSlot';
 import OilDynamics from './pages/OilDynamics';
 import RetirementImpact from './pages/RetirementImpact';
 import Analysis from './pages/Analysis';
@@ -23,6 +24,7 @@ const LIVE_METRICS_TIMEOUT_MS = 35000;
 const MIN_REFRESH_INTERVAL_MS = 60 * 1000;
 const TAB_LABELS = ['Overview', 'Oil Dynamics', 'Retirement Impact', 'Analysis', 'Executive Corruption'] as const;
 const VISITOR_ID_STORAGE_KEY = 'oil-wealth-nexus-visitor-id';
+const ADSENSE_OVERVIEW_SLOT = import.meta.env.VITE_ADSENSE_OVERVIEW_SLOT;
 
 const formatRefreshInterval = (value: number) => {
   const hours = value / (60 * 60 * 1000);
@@ -604,6 +606,12 @@ export default function App() {
           />
         </div>
 
+        <AdSlot
+          slot={ADSENSE_OVERVIEW_SLOT}
+          label="Advertisement"
+          className="mb-12"
+        />
+
         {/* Retirement Savings Deep Dive */}
         <section className="mb-12">
           <div className="flex items-center gap-3 mb-8">
@@ -986,6 +994,9 @@ export default function App() {
               <span className="text-slate-500 text-sm font-medium">Oil & Wealth Nexus Dashboard © 2026</span>
               <span className="text-indigo-600 text-xs font-bold uppercase tracking-widest">A Middle-Class Empowerment Voice</span>
               <span className="text-slate-400 text-[10px] font-medium italic mt-0.5">Brought to you by Mike Cirigliano</span>
+              <span className="text-slate-400 text-[10px] font-medium mt-1">
+                This site may include advertising and affiliate links as it grows.
+              </span>
               {visitorStats && (
                 <span className="text-slate-400 text-[10px] font-medium mt-1">
                   External visits tracked: {visitorStats.totalHits} total, {visitorStats.uniqueVisitors} unique visitors

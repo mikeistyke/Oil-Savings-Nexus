@@ -1,9 +1,12 @@
 import React from 'react';
 import { FileText, Landmark, ShieldAlert } from 'lucide-react';
 import { motion } from 'motion/react';
+import AdSlot from '../components/AdSlot';
 import EssaySection from '../components/EssaySection';
 import { ExecutiveCorruptionProvider } from '../context/ExecutiveCorruptionContext';
 import { useExecutiveCorruption } from '../hooks/useExecutiveCorruption';
+
+const ADSENSE_ESSAY_SLOT = import.meta.env.VITE_ADSENSE_ESSAY_SLOT;
 
 function ExecutiveCorruptionContent() {
   const { title, byline, intro, thesis, sections, sources } = useExecutiveCorruption();
@@ -40,7 +43,12 @@ function ExecutiveCorruptionContent() {
       <div className="mb-12 grid gap-8 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.8fr)]">
         <div className="space-y-8">
           {sections.map((section, index) => (
-            <EssaySection key={section.id} section={section} emphasizeLeadWord={index === 0} />
+            <React.Fragment key={section.id}>
+              <EssaySection section={section} emphasizeLeadWord={index === 0} />
+              {index === 0 && (
+                <AdSlot slot={ADSENSE_ESSAY_SLOT} label="Advertisement" />
+              )}
+            </React.Fragment>
           ))}
         </div>
 
