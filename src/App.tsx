@@ -17,6 +17,8 @@ import Analysis from './pages/Analysis';
 
 const data = generateNexusData();
 const LIVE_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
+const LIVE_METRICS_TIMEOUT_MS = 35000;
+const TAB_LABELS = ['Overview', 'Oil Dynamics', 'Retirement Impact', 'Analysis'] as const;
 
 const formatSyncLabel = (value?: string) => {
   if (!value) {
@@ -239,12 +241,27 @@ export default function App() {
   const latest = data[data.length - 1];
   const initial = data[0];
 
+  const fetchWithTimeout = async (url: string, timeoutMs: number) => {
+    const timeoutSupported = typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function';
+
+    if (timeoutSupported) {
+      return fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+    }
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      return await fetch(url, { signal: controller.signal });
+    } finally {
+      window.clearTimeout(timer);
+    }
+  };
+
   const loadLiveMetrics = useCallback(async () => {
     setIsRefreshingMetrics(true);
     try {
-      const response = await fetch('/api/live-metrics', {
-        signal: AbortSignal.timeout(35000),
-      });
+      const response = await fetchWithTimeout('/api/live-metrics', LIVE_METRICS_TIMEOUT_MS);
       if (!response.ok) {
         let apiMessage = '';
         try {
@@ -295,7 +312,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-100">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-bottom border-slate-200 px-6 py-4">
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="bg-slate-900 p-2 rounded-xl">
@@ -307,7 +324,7 @@ export default function App() {
             </div>
           </div>
           <nav className="hidden md:flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
-            {['Overview', 'Oil Dynamics', 'Retirement Impact', 'Analysis'].map((tab) => (
+            {TAB_LABELS.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab.toLowerCase())}
@@ -322,6 +339,19 @@ export default function App() {
               </button>
             ))}
           </nav>
+        </div>
+        <div className="mt-4 max-w-7xl mx-auto md:hidden">
+          <label htmlFor="mobile-tab-select" className="sr-only">Select dashboard section</label>
+          <select
+            id="mobile-tab-select"
+            value={activeTab}
+            onChange={(event) => setActiveTab(event.target.value)}
+            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700"
+          >
+            {TAB_LABELS.map((tab) => (
+              <option key={tab} value={tab.toLowerCase()}>{tab}</option>
+            ))}
+          </select>
         </div>
       </header>
 
