@@ -20,12 +20,13 @@ import Analysis from './pages/Analysis';
 import ExecutiveCorruption from './pages/ExecutiveCorruption';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import AdvertisingDisclosure from './pages/AdvertisingDisclosure';
+import ShopResources from './pages/ShopResources';
 
 const data = generateNexusData();
 const LIVE_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
 const LIVE_METRICS_TIMEOUT_MS = 35000;
 const MIN_REFRESH_INTERVAL_MS = 60 * 1000;
-const TAB_LABELS = ['Overview', 'Oil Dynamics', 'Retirement Impact', 'Analysis', 'Executive Corruption'] as const;
+const TAB_LABELS = ['Overview', 'Oil Dynamics', 'Retirement Impact', 'Analysis', 'Executive Corruption', 'Shop Resources'] as const;
 const VISITOR_ID_STORAGE_KEY = 'oil-wealth-nexus-visitor-id';
 const ADSENSE_OVERVIEW_SLOT = import.meta.env.VITE_ADSENSE_OVERVIEW_SLOT;
 
@@ -1016,6 +1017,10 @@ export default function App() {
           <ExecutiveCorruption />
         )}
 
+        {activeTab === 'shop resources' && (
+          <ShopResources />
+        )}
+
         {activeTab === 'privacy policy' && (
           <PrivacyPolicy />
         )}
@@ -1068,6 +1073,7 @@ export default function App() {
               </a>
             </div>
             <div className="flex flex-wrap justify-center gap-4 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 md:justify-end">
+              <button type="button" onClick={() => setActiveTab('shop resources')} className="hover:text-slate-900 transition-colors">Shop Resources</button>
               <button type="button" onClick={() => setActiveTab('privacy policy')} className="hover:text-slate-900 transition-colors">Privacy Policy</button>
               <button type="button" onClick={() => setActiveTab('advertising disclosure')} className="hover:text-slate-900 transition-colors">Advertising Disclosure</button>
             </div>
