@@ -11,13 +11,18 @@ function getAnalyticsKey(req: IncomingMessage) {
   return headerValue ?? '';
 }
 
+function stripQuotes(value: string) {
+  return value.replace(/^["']|["']$/g, '');
+}
+
 function isOwnerAuthorized(req: IncomingMessage) {
-  const expected = process.env.AFFILIATE_ANALYTICS_KEY?.trim();
+  const raw = process.env.AFFILIATE_ANALYTICS_KEY?.trim() ?? '';
+  const expected = stripQuotes(raw);
   if (!expected) {
     return false;
   }
 
-  return getAnalyticsKey(req).trim() === expected;
+  return stripQuotes(getAnalyticsKey(req).trim()) === expected;
 }
 
 function readJsonBody(req: IncomingMessage): Promise<Record<string, unknown>> {
