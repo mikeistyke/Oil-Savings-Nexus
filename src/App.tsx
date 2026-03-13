@@ -31,6 +31,80 @@ const formatSyncLabel = (value?: string) => {
   });
 };
 
+const normalizeMetric = (metric: any, fallbackSyncedAt?: string): LiveMetric | null => {
+  if (!metric || typeof metric !== 'object') {
+    return null;
+  }
+
+  return {
+    title: String(metric.title ?? ''),
+    value: Number(metric.value ?? 0),
+    displayValue: String(metric.displayValue ?? metric.display ?? 'N/A'),
+    subValue: String(metric.subValue ?? metric.subtitle ?? ''),
+    trend: Number(metric.trend ?? 0),
+    sourceLabel: String(metric.sourceLabel ?? metric.source ?? ''),
+    sourceHref: String(metric.sourceHref ?? metric.sourceUrl ?? '#'),
+    sourceFrequency: String(metric.sourceFrequency ?? metric.frequency ?? ''),
+    publishedAt: String(metric.publishedAt ?? metric.published ?? metric.publishedDate ?? ''),
+    syncedAt: String(metric.syncedAt ?? metric.synced ?? fallbackSyncedAt ?? ''),
+    note: metric.note ? String(metric.note) : undefined,
+  };
+};
+
+const normalizeLiveMetrics = (payload: unknown): LiveMetricsResponse | null => {
+  if (!payload || typeof payload !== 'object') {
+    return null;
+  }
+
+  const root = payload as Record<string, any>;
+  const syncedAt = String(root.syncedAt ?? root.synced ?? '');
+  const refreshIntervalMs = Number(root.refreshIntervalMs ?? (6 * 60 * 60 * 1000));
+  const rawMetrics = root.metrics ?? root.data?.metrics ?? root.payload?.metrics;
+
+  if (!rawMetrics || typeof rawMetrics !== 'object') {
+    return null;
+  }
+
+  const metrics = rawMetrics as Record<string, any>;
+
+  const oilConsumption = normalizeMetric(
+    metrics.oilConsumption ?? metrics.oil_consumption,
+    syncedAt,
+  );
+  const oilPrice = normalizeMetric(
+    metrics.oilPrice ?? metrics.oil_price,
+    syncedAt,
+  );
+  const totalRetirementAssets = normalizeMetric(
+    metrics.totalRetirementAssets ?? metrics.total_retirement_assets,
+    syncedAt,
+  );
+  const retirementIndex = normalizeMetric(
+    metrics.retirementIndex ?? metrics.retirement_index,
+    syncedAt,
+  );
+  const inflationPressure = normalizeMetric(
+    metrics.inflationPressure ?? metrics.inflation_pressure,
+    syncedAt,
+  );
+
+  if (!oilConsumption || !oilPrice || !totalRetirementAssets || !retirementIndex || !inflationPressure) {
+    return null;
+  }
+
+  return {
+    syncedAt,
+    refreshIntervalMs,
+    metrics: {
+      oilConsumption,
+      oilPrice,
+      totalRetirementAssets,
+      retirementIndex,
+      inflationPressure,
+    },
+  };
+};
+
 const StatCard = ({
   title,
   value,
@@ -129,7 +203,11 @@ export default function App() {
       if (!response.ok) {
         throw new Error(`Live metrics responded ${response.status}`);
       }
-      const payload: LiveMetricsResponse = await response.json();
+      const rawPayload: unknown = await response.json();
+      const payload = normalizeLiveMetrics(rawPayload);
+      if (!payload) {
+        throw new Error('Live metrics payload shape was invalid.');
+      }
       setLiveMetrics(payload);
       setLiveMetricsError(null);
     } catch (error) {
