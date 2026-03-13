@@ -2,11 +2,26 @@ import React from 'react';
 import { FileText, Landmark, ShieldAlert } from 'lucide-react';
 import { motion } from 'motion/react';
 import AdSlot from '../components/AdSlot';
+import AffiliateRecommendations from '../components/AffiliateRecommendations';
 import EssaySection from '../components/EssaySection';
 import { ExecutiveCorruptionProvider } from '../context/ExecutiveCorruptionContext';
 import { useExecutiveCorruption } from '../hooks/useExecutiveCorruption';
 
 const ADSENSE_ESSAY_SLOT = import.meta.env.VITE_ADSENSE_ESSAY_SLOT;
+const essayAffiliateItems = [
+  {
+    title: 'Monroe Doctrine and hemispheric strategy reading list',
+    description: 'Contextual material for readers who want historical and geopolitical background beyond the essay itself.',
+    searchTerm: 'Monroe Doctrine Latin America foreign policy books',
+    cta: 'Browse doctrine history titles',
+  },
+  {
+    title: 'Oil shocks, inflation, and market disruption reading',
+    description: 'Suggested books for readers digging deeper into how energy volatility impacts markets and household wealth.',
+    searchTerm: 'oil shocks inflation market volatility books',
+    cta: 'Browse macro-energy titles',
+  },
+];
 
 function ExecutiveCorruptionContent() {
   const { title, byline, intro, thesis, sections, sources } = useExecutiveCorruption();
@@ -47,6 +62,9 @@ function ExecutiveCorruptionContent() {
               <EssaySection section={section} emphasizeLeadWord={index === 0} />
               {index === 0 && (
                 <AdSlot slot={ADSENSE_ESSAY_SLOT} label="Advertisement" />
+              )}
+              {index === 0 && (
+                <AffiliateRecommendations title="Further Reading" items={essayAffiliateItems} />
               )}
             </React.Fragment>
           ))}

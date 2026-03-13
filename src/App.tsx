@@ -13,10 +13,13 @@ import { cn } from './lib/utils';
 import type { LiveMetric, LiveMetricsResponse } from './lib/liveMetrics';
 import type { VisitorStatsResponse } from './lib/visitorStats';
 import AdSlot from './components/AdSlot';
+import AffiliateRecommendations from './components/AffiliateRecommendations';
 import OilDynamics from './pages/OilDynamics';
 import RetirementImpact from './pages/RetirementImpact';
 import Analysis from './pages/Analysis';
 import ExecutiveCorruption from './pages/ExecutiveCorruption';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import AdvertisingDisclosure from './pages/AdvertisingDisclosure';
 
 const data = generateNexusData();
 const LIVE_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
@@ -25,6 +28,21 @@ const MIN_REFRESH_INTERVAL_MS = 60 * 1000;
 const TAB_LABELS = ['Overview', 'Oil Dynamics', 'Retirement Impact', 'Analysis', 'Executive Corruption'] as const;
 const VISITOR_ID_STORAGE_KEY = 'oil-wealth-nexus-visitor-id';
 const ADSENSE_OVERVIEW_SLOT = import.meta.env.VITE_ADSENSE_OVERVIEW_SLOT;
+
+const overviewAffiliateItems = [
+  {
+    title: 'Energy market explainers and oil geopolitics books',
+    description: 'Support readers who want more depth on oil shocks, energy security, and commodity volatility.',
+    searchTerm: 'oil geopolitics energy security books',
+    cta: 'Browse energy titles',
+  },
+  {
+    title: 'Retirement and long-term investing guides',
+    description: 'Context for readers tracking how inflation and macro shocks affect household wealth over time.',
+    searchTerm: 'retirement investing inflation books',
+    cta: 'Browse investing guides',
+  },
+];
 
 const formatRefreshInterval = (value: number) => {
   const hours = value / (60 * 60 * 1000);
@@ -612,6 +630,13 @@ export default function App() {
           className="mb-12"
         />
 
+        <div className="mb-12">
+          <AffiliateRecommendations
+            title="Reader Resources"
+            items={overviewAffiliateItems}
+          />
+        </div>
+
         {/* Retirement Savings Deep Dive */}
         <section className="mb-12">
           <div className="flex items-center gap-3 mb-8">
@@ -984,6 +1009,14 @@ export default function App() {
         {activeTab === 'executive corruption' && (
           <ExecutiveCorruption />
         )}
+
+        {activeTab === 'privacy policy' && (
+          <PrivacyPolicy />
+        )}
+
+        {activeTab === 'advertising disclosure' && (
+          <AdvertisingDisclosure />
+        )}
       </main>
 
       <footer className="border-t border-slate-200 bg-white py-12 px-6">
@@ -1004,10 +1037,16 @@ export default function App() {
               )}
             </div>
           </div>
-          <div className="flex gap-6">
-            <a href="#" className="text-slate-400 hover:text-slate-600 transition-colors"><Globe className="w-5 h-5" /></a>
-            <a href="#" className="text-slate-400 hover:text-slate-600 transition-colors"><Droplets className="w-5 h-5" /></a>
-            <a href="#" className="text-slate-400 hover:text-slate-600 transition-colors"><Wallet className="w-5 h-5" /></a>
+          <div className="flex flex-col items-center gap-4 md:items-end">
+            <div className="flex gap-6">
+              <a href="#" className="text-slate-400 hover:text-slate-600 transition-colors"><Globe className="w-5 h-5" /></a>
+              <a href="#" className="text-slate-400 hover:text-slate-600 transition-colors"><Droplets className="w-5 h-5" /></a>
+              <a href="#" className="text-slate-400 hover:text-slate-600 transition-colors"><Wallet className="w-5 h-5" /></a>
+            </div>
+            <div className="flex flex-wrap justify-center gap-4 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 md:justify-end">
+              <button type="button" onClick={() => setActiveTab('privacy policy')} className="hover:text-slate-900 transition-colors">Privacy Policy</button>
+              <button type="button" onClick={() => setActiveTab('advertising disclosure')} className="hover:text-slate-900 transition-colors">Advertising Disclosure</button>
+            </div>
           </div>
         </div>
       </footer>
