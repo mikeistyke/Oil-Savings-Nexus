@@ -3,6 +3,10 @@ import { BarChart3, MousePointerClick } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { AffiliateAnalyticsResponse } from '../lib/affiliateClicks';
 
+interface AffiliateAnalyticsProps {
+  ownerKey: string | null;
+}
+
 function formatDateTime(value: string | null) {
   if (!value) {
     return 'No clicks recorded yet';
@@ -46,16 +50,30 @@ function RankingList({ title, rows }: { title: string; rows: Array<{ key: string
   );
 }
 
-export default function AffiliateAnalytics() {
+export default function AffiliateAnalytics({ ownerKey }: AffiliateAnalyticsProps) {
   const [analytics, setAnalytics] = useState<AffiliateAnalyticsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const loadAnalytics = async () => {
+    if (!ownerKey) {
+      setError('Owner access key required.');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const response = await fetch('/api/affiliate-clicks', { cache: 'no-store' });
+      const response = await fetch('/api/affiliate-clicks', {
+        cache: 'no-store',
+        headers: {
+          'x-analytics-key': ownerKey,
+        },
+      });
       if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Unauthorized. Verify owner analytics key.');
+        }
+
         throw new Error(`Affiliate analytics responded ${response.status}`);
       }
 
@@ -70,8 +88,14 @@ export default function AffiliateAnalytics() {
   };
 
   useEffect(() => {
+    if (!ownerKey) {
+      setAnalytics(null);
+      setError('Owner access key required.');
+      return;
+    }
+
     loadAnalytics();
-  }, []);
+  }, [ownerKey]);
 
   const summary = useMemo(() => ({
     totalClicks: analytics?.totalClicks ?? 0,
@@ -101,7 +125,7 @@ export default function AffiliateAnalytics() {
         <button
           type="button"
           onClick={loadAnalytics}
-          disabled={isLoading}
+          disabled={isLoading || !ownerKey}
           className="inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition-colors hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <MousePointerClick className="h-4 w-4" />

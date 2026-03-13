@@ -14,6 +14,24 @@ import { getAffiliateAnalytics, recordAffiliateClick } from './affiliate-clicks.
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 
+function getAnalyticsHeader(req: express.Request) {
+  const headerValue = req.headers['x-analytics-key'];
+  if (Array.isArray(headerValue)) {
+    return headerValue[0] ?? '';
+  }
+
+  return headerValue ?? '';
+}
+
+function isOwnerAuthorized(req: express.Request) {
+  const expected = process.env.AFFILIATE_ANALYTICS_KEY?.trim();
+  if (!expected) {
+    return false;
+  }
+
+  return getAnalyticsHeader(req).trim() === expected;
+}
+
 app.use(express.json());
 
 // ── Live metrics API ────────────────────────────────────────────────────────
@@ -60,6 +78,11 @@ app.post('/api/visitor-stats', (req, res) => {
 
 app.get('/api/affiliate-clicks', (_req, res) => {
   try {
+    if (!isOwnerAuthorized(_req)) {
+      res.status(401).json({ message: 'Unauthorized affiliate analytics access.' });
+      return;
+    }
+
     res.setHeader('Cache-Control', 'no-store');
     res.json(getAffiliateAnalytics());
   } catch (error) {

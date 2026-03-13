@@ -29,6 +29,7 @@ const LIVE_METRICS_TIMEOUT_MS = 35000;
 const MIN_REFRESH_INTERVAL_MS = 60 * 1000;
 const TAB_LABELS = ['Overview', 'Oil Dynamics', 'Retirement Impact', 'Analysis', 'Executive Corruption', 'Shop Resources', 'Affiliate Analytics'] as const;
 const VISITOR_ID_STORAGE_KEY = 'oil-wealth-nexus-visitor-id';
+const ANALYTICS_OWNER_KEY_STORAGE = 'oil-wealth-nexus-analytics-owner-key';
 const ADSENSE_OVERVIEW_SLOT = import.meta.env.VITE_ADSENSE_OVERVIEW_SLOT;
 
 const overviewAffiliateItems = [
@@ -277,6 +278,13 @@ const BlueskyIcon = ({ className }: { className?: string }) => (
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('overview');
+  const [analyticsOwnerKey, setAnalyticsOwnerKey] = useState<string | null>(() => {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
+    return window.sessionStorage.getItem(ANALYTICS_OWNER_KEY_STORAGE);
+  });
   const [liveMetrics, setLiveMetrics] = useState<LiveMetricsResponse | null>(null);
   const [liveMetricsError, setLiveMetricsError] = useState<string | null>(null);
   const [isRefreshingMetrics, setIsRefreshingMetrics] = useState(false);
@@ -412,6 +420,54 @@ export default function App() {
   const heroOilPriceValue = currentOilPrice.toFixed(2);
   const heroWealthDelta = cardRetirementIndex ? `${cardRetirementIndex.trend.toFixed(1)}` : wealthChange;
 
+  const requestAffiliateAnalyticsAccess = useCallback(async () => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const currentKey = analyticsOwnerKey ?? window.sessionStorage.getItem(ANALYTICS_OWNER_KEY_STORAGE);
+    const promptedKey = window.prompt('Enter owner analytics key');
+    const submittedKey = (promptedKey ?? currentKey ?? '').trim();
+
+    if (!submittedKey) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/affiliate-clicks', {
+        cache: 'no-store',
+        headers: {
+          'x-analytics-key': submittedKey,
+        },
+      });
+
+      if (response.status === 401) {
+        window.alert('Access denied. Check your owner analytics key.');
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(`Affiliate analytics responded ${response.status}`);
+      }
+
+      window.sessionStorage.setItem(ANALYTICS_OWNER_KEY_STORAGE, submittedKey);
+      setAnalyticsOwnerKey(submittedKey);
+      setActiveTab('affiliate analytics');
+    } catch (error) {
+      console.error('[affiliate-analytics] owner access check failed:', error);
+      window.alert('Could not open Affiliate Analytics right now. Try again shortly.');
+    }
+  }, [analyticsOwnerKey]);
+
+  const handleTabSelection = useCallback((tabValue: string) => {
+    if (tabValue === 'affiliate analytics') {
+      void requestAffiliateAnalyticsAccess();
+      return;
+    }
+
+    setActiveTab(tabValue);
+  }, [requestAffiliateAnalyticsAccess]);
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-100">
       {/* Header */}
@@ -430,7 +486,7 @@ export default function App() {
             {TAB_LABELS.map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab.toLowerCase())}
+                onClick={() => handleTabSelection(tab.toLowerCase())}
                 className={cn(
                   "px-4 py-2 text-sm font-medium rounded-lg transition-all",
                   activeTab === tab.toLowerCase() 
@@ -448,7 +504,7 @@ export default function App() {
           <select
             id="mobile-tab-select"
             value={activeTab}
-            onChange={(event) => setActiveTab(event.target.value)}
+            onChange={(event) => handleTabSelection(event.target.value)}
             className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700"
           >
             {TAB_LABELS.map((tab) => (
@@ -1025,7 +1081,7 @@ export default function App() {
         )}
 
         {activeTab === 'affiliate analytics' && (
-          <AffiliateAnalytics />
+          <AffiliateAnalytics ownerKey={analyticsOwnerKey} />
         )}
 
         {activeTab === 'privacy policy' && (
@@ -1081,7 +1137,7 @@ export default function App() {
             </div>
             <div className="flex flex-wrap justify-center gap-4 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 md:justify-end">
               <button type="button" onClick={() => setActiveTab('shop resources')} className="hover:text-slate-900 transition-colors">Shop Resources</button>
-              <button type="button" onClick={() => setActiveTab('affiliate analytics')} className="hover:text-slate-900 transition-colors">Affiliate Analytics</button>
+              <button type="button" onClick={() => void requestAffiliateAnalyticsAccess()} className="hover:text-slate-900 transition-colors">Affiliate Analytics</button>
               <button type="button" onClick={() => setActiveTab('privacy policy')} className="hover:text-slate-900 transition-colors">Privacy Policy</button>
               <button type="button" onClick={() => setActiveTab('advertising disclosure')} className="hover:text-slate-900 transition-colors">Advertising Disclosure</button>
             </div>

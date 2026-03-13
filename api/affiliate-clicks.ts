@@ -2,6 +2,24 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import { getAffiliateAnalytics, recordAffiliateClick } from '../affiliate-clicks.server.js';
 import type { RecordAffiliateClickRequest } from '../src/lib/affiliateClicks.js';
 
+function getAnalyticsKey(req: IncomingMessage) {
+  const headerValue = req.headers['x-analytics-key'];
+  if (Array.isArray(headerValue)) {
+    return headerValue[0] ?? '';
+  }
+
+  return headerValue ?? '';
+}
+
+function isOwnerAuthorized(req: IncomingMessage) {
+  const expected = process.env.AFFILIATE_ANALYTICS_KEY?.trim();
+  if (!expected) {
+    return false;
+  }
+
+  return getAnalyticsKey(req).trim() === expected;
+}
+
 function readJsonBody(req: IncomingMessage): Promise<Record<string, unknown>> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
@@ -33,18 +51,35 @@ function getIpAddress(req: IncomingMessage) {
   return forwarded ?? req.socket.remoteAddress ?? '';
 }
 
+function toRecordAffiliateClickRequest(payload: Record<string, unknown>): RecordAffiliateClickRequest {
+  return {
+    pageId: typeof payload.pageId === 'string' ? payload.pageId : '',
+    blockId: typeof payload.blockId === 'string' ? payload.blockId : '',
+    itemTitle: typeof payload.itemTitle === 'string' ? payload.itemTitle : '',
+    destinationUrl: typeof payload.destinationUrl === 'string' ? payload.destinationUrl : '',
+    visitorId: typeof payload.visitorId === 'string' ? payload.visitorId : undefined,
+  };
+}
+
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Cache-Control', 'no-store');
 
   try {
     if (req.method === 'GET') {
+      if (!isOwnerAuthorized(req)) {
+        res.statusCode = 401;
+        res.end(JSON.stringify({ message: 'Unauthorized affiliate analytics access.' }));
+        return;
+      }
+
       res.end(JSON.stringify(getAffiliateAnalytics()));
       return;
     }
 
     if (req.method === 'POST') {
-      const payload = await readJsonBody(req) as RecordAffiliateClickRequest;
+      const rawPayload = await readJsonBody(req);
+      const payload = toRecordAffiliateClickRequest(rawPayload);
 
       if (!payload.pageId || !payload.blockId || !payload.itemTitle || !payload.destinationUrl) {
         res.statusCode = 400;

@@ -27,6 +27,8 @@ This project includes first-party affiliate click tracking and an in-app analyti
 
 Open the app and navigate to the `Affiliate Analytics` tab in the top menu or footer links.
 
+The analytics page now requires an owner key prompt and validates access server-side.
+
 The page shows:
 
 1. Total affiliate clicks
@@ -61,3 +63,17 @@ On Vercel, analytics are ephemeral unless you set a persistent path:
 4. `VITE_ADSENSE_SHOP_SLOT`
 5. `AFFILIATE_DB_PATH` (optional for durable affiliate analytics)
 6. `VISITOR_DB_PATH` (optional for durable visitor metrics)
+7. `AFFILIATE_ANALYTICS_KEY` (required to restrict affiliate analytics to owner access)
+
+### Owner-Only Access Setup
+
+To lock affiliate analytics so only you can view it:
+
+1. Set `AFFILIATE_ANALYTICS_KEY` in your hosting environment (for example, Vercel Project Settings → Environment Variables).
+2. Redeploy.
+3. In the site UI, click `Affiliate Analytics` and enter that key when prompted.
+
+Notes:
+
+1. `AFFILIATE_ANALYTICS_KEY` is server-side only and should not use a `VITE_` prefix.
+2. Affiliate click recording (`POST /api/affiliate-clicks`) stays public so normal readers can still generate click data.
