@@ -420,43 +420,30 @@ export default function App() {
   const heroOilPriceValue = currentOilPrice.toFixed(2);
   const heroWealthDelta = cardRetirementIndex ? `${cardRetirementIndex.trend.toFixed(1)}` : wealthChange;
 
-  const requestAffiliateAnalyticsAccess = useCallback(async () => {
-    if (typeof window === 'undefined') {
-      return;
-    }
+  const requestAffiliateAnalyticsAccess = useCallback(() => {
+    const expected = import.meta.env.VITE_AFFILIATE_ANALYTICS_KEY?.trim();
+    const stored = analyticsOwnerKey ?? window.sessionStorage.getItem(ANALYTICS_OWNER_KEY_STORAGE);
 
-    const currentKey = analyticsOwnerKey ?? window.sessionStorage.getItem(ANALYTICS_OWNER_KEY_STORAGE);
-    const promptedKey = window.prompt('Enter owner analytics key');
-    const submittedKey = (promptedKey ?? currentKey ?? '').trim();
-
-    if (!submittedKey) {
-      return;
-    }
-
-    try {
-      const response = await fetch('/api/affiliate-clicks', {
-        cache: 'no-store',
-        headers: {
-          'x-analytics-key': submittedKey,
-        },
-      });
-
-      if (response.status === 401) {
-        window.alert('Access denied. Check your owner analytics key.');
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error(`Affiliate analytics responded ${response.status}`);
-      }
-
-      window.sessionStorage.setItem(ANALYTICS_OWNER_KEY_STORAGE, submittedKey);
-      setAnalyticsOwnerKey(submittedKey);
+    if (stored && expected && stored === expected) {
       setActiveTab('affiliate analytics');
-    } catch (error) {
-      console.error('[affiliate-analytics] owner access check failed:', error);
-      window.alert('Could not open Affiliate Analytics right now. Try again shortly.');
+      return;
     }
+
+    const entered = window.prompt('Enter owner analytics key');
+    const submitted = entered?.trim() ?? '';
+
+    if (!submitted) {
+      return;
+    }
+
+    if (!expected || submitted !== expected) {
+      window.alert('Access denied. Check your owner analytics key.');
+      return;
+    }
+
+    window.sessionStorage.setItem(ANALYTICS_OWNER_KEY_STORAGE, submitted);
+    setAnalyticsOwnerKey(submitted);
+    setActiveTab('affiliate analytics');
   }, [analyticsOwnerKey]);
 
   const handleTabSelection = useCallback((tabValue: string) => {
