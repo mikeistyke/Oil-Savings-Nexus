@@ -15,9 +15,14 @@ function stripQuotes(value: string) {
   return value.replace(/^["']|["']$/g, '');
 }
 
+function getExpectedAnalyticsKey() {
+  const privateKey = process.env.AFFILIATE_ANALYTICS_KEY?.trim() ?? '';
+  const viteKey = process.env.VITE_AFFILIATE_ANALYTICS_KEY?.trim() ?? '';
+  return stripQuotes(privateKey || viteKey);
+}
+
 function isOwnerAuthorized(req: IncomingMessage) {
-  const raw = process.env.AFFILIATE_ANALYTICS_KEY?.trim() ?? '';
-  const expected = stripQuotes(raw);
+  const expected = getExpectedAnalyticsKey();
   if (!expected) {
     return false;
   }

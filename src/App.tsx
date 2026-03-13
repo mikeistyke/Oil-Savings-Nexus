@@ -421,23 +421,11 @@ export default function App() {
   const heroWealthDelta = cardRetirementIndex ? `${cardRetirementIndex.trend.toFixed(1)}` : wealthChange;
 
   const requestAffiliateAnalyticsAccess = useCallback(() => {
-    const expected = import.meta.env.VITE_AFFILIATE_ANALYTICS_KEY?.trim();
     const stored = analyticsOwnerKey ?? window.sessionStorage.getItem(ANALYTICS_OWNER_KEY_STORAGE);
 
-    if (stored && expected && stored === expected) {
-      setActiveTab('affiliate analytics');
-      return;
-    }
-
-    const entered = window.prompt('Enter owner analytics key');
-    const submitted = entered?.trim() ?? '';
+    const submitted = (window.prompt('Enter owner analytics key') ?? stored ?? '').trim();
 
     if (!submitted) {
-      return;
-    }
-
-    if (!expected || submitted !== expected) {
-      window.alert('Access denied. Check your owner analytics key.');
       return;
     }
 
