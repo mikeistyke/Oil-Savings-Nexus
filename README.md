@@ -85,3 +85,45 @@ Notes:
 
 1. `AFFILIATE_ANALYTICS_KEY` is server-side only and should not use a `VITE_` prefix.
 2. Affiliate click recording (`POST /api/affiliate-clicks`) stays public so normal readers can still generate click data.
+
+## Policy Resources Update (March 2026)
+
+This release adds a dedicated `Policy Resources` experience for source-backed policy documents.
+
+### New Page
+
+1. Added a new `Policy Resources` tab/page in the app shell.
+2. Added a `Back To Hero Page` action on the policy page.
+3. Added a `Show Credentialing` / `Hide Credentialing` toggle.
+
+### New Document Asset
+
+1. Converted and published the legislative brief as a web-served PDF:
+   - `public/docs/EIA_Legislative_Brief_Cirigliano.pdf`
+2. The original DOCX source remains in:
+   - `docs/EIA_Legislative_Brief_Cirigliano.docx`
+
+### Standard Credentialing Included
+
+Each policy document card now displays:
+
+1. Document type
+2. Author
+3. Publication date
+4. Primary source context
+5. Suggested citation
+
+### React Architecture Additions
+
+1. New page component: `src/pages/PolicyResources.tsx`
+2. New reusable card component: `src/components/PolicyDocumentCard.tsx`
+3. New data/state hook: `src/hooks/usePolicyResources.ts`
+
+### Navigation And Hero-Return Updates
+
+1. Added `Policy Resources` to the top tab nav and footer links.
+2. Added explicit `Home` link in footer quick links.
+3. Updated footer icon links that previously pointed to `#` so they route back to the hero/overview page.
+4. Added hero-return buttons to legal pages:
+   - `src/pages/PrivacyPolicy.tsx`
+   - `src/pages/AdvertisingDisclosure.tsx`
