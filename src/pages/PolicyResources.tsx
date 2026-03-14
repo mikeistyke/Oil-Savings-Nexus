@@ -20,7 +20,7 @@ export default function PolicyResources({ onNavigateHome }: PolicyResourcesProps
             <h2 className="text-3xl font-bold text-slate-900 md:text-4xl">Policy Resources</h2>
           </div>
           <p className="max-w-4xl text-lg leading-relaxed text-slate-600">
-            Reference briefs, source-backed public policy documents, and downloadable materials used in the Oil and Wealth Nexus analysis framework.
+            Reference briefs, source-backed public policy documents, and downloadable materials used in the Oil Savings Nexus analysis framework.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <button

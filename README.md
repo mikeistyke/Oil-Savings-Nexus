@@ -19,6 +19,17 @@ View your app in AI Studio: https://ai.studio/apps/910a1870-4f4f-4720-9d52-686f0
 3. Run the app:
    `npm run dev`
 
+## Release History
+
+### 2026-03-13
+
+1. Added `Policy Resources` page and navigation entry in the app shell.
+2. Added reusable policy document card component and policy resources hook.
+3. Published policy brief PDF at `public/docs/EIA_Legislative_Brief_Cirigliano.pdf`.
+4. Added standardized policy credentialing fields and citation display.
+5. Updated footer and legal-page navigation so users can return to the hero overview quickly.
+6. Renamed branding references from `Oil & Wealth Nexus` / `oil-wealth-nexus` to `Oil Savings Nexus` / `oil-savings-nexus` in app titles and client storage/session keys.
+
 ## Monetization Analytics
 
 This project includes first-party affiliate click tracking and an in-app analytics page.

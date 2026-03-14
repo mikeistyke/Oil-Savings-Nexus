@@ -29,8 +29,8 @@ const LIVE_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
 const LIVE_METRICS_TIMEOUT_MS = 35000;
 const MIN_REFRESH_INTERVAL_MS = 60 * 1000;
 const TAB_LABELS = ['Overview', 'Oil Dynamics', 'Retirement Impact', 'Analysis', 'Executive Corruption', 'Policy Resources', 'Shop Resources', 'Affiliate Analytics'] as const;
-const VISITOR_ID_STORAGE_KEY = 'oil-wealth-nexus-visitor-id';
-const ANALYTICS_OWNER_KEY_STORAGE = 'oil-wealth-nexus-analytics-owner-key';
+const VISITOR_ID_STORAGE_KEY = 'oil-savings-nexus-visitor-id';
+const ANALYTICS_OWNER_KEY_STORAGE = 'oil-savings-nexus-analytics-owner-key';
 const ADSENSE_OVERVIEW_SLOT = import.meta.env.VITE_ADSENSE_OVERVIEW_SLOT;
 
 const overviewAffiliateItems = [
@@ -367,7 +367,7 @@ export default function App() {
       return;
     }
 
-    const pageVisitKey = `oil-wealth-nexus-hit:${window.location.pathname}:${Math.floor(performance.timeOrigin)}`;
+    const pageVisitKey = `oil-savings-nexus-hit:${window.location.pathname}:${Math.floor(performance.timeOrigin)}`;
     if (window.sessionStorage.getItem(pageVisitKey)) {
       return;
     }
@@ -454,7 +454,7 @@ export default function App() {
               <Activity className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight">Oil & Wealth Nexus</h1>
+              <h1 className="text-xl font-bold tracking-tight">Oil Savings Nexus</h1>
               <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">15-Month Economic Analysis (2025-2026)</p>
             </div>
           </div>
@@ -1078,7 +1078,7 @@ export default function App() {
           <div className="flex items-center gap-3">
             <Activity className="w-5 h-5 text-slate-400" />
             <div className="flex flex-col">
-              <span className="text-slate-500 text-sm font-medium">Oil & Wealth Nexus Dashboard © 2026</span>
+              <span className="text-slate-500 text-sm font-medium">Oil Savings Nexus Dashboard © 2026</span>
               <span className="text-indigo-600 text-xs font-bold uppercase tracking-widest">A Middle-Class Empowerment Voice</span>
               <span className="text-slate-400 text-[10px] font-medium italic mt-0.5">Brought to you by Mike Cirigliano</span>
               <span className="text-slate-400 text-[10px] font-medium mt-1">

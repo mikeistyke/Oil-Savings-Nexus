@@ -24,7 +24,7 @@ const defaultResources: PolicyResource[] = [
     publishedOn: 'March 2026',
     credential: 'Policy Briefing Document',
     citation:
-      'Cirigliano, M. (2026). EIA Legislative Brief. Oil and Wealth Nexus policy resource library.',
+      'Cirigliano, M. (2026). EIA Legislative Brief. Oil Savings Nexus policy resource library.',
   },
 ];
 
