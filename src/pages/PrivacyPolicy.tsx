@@ -1,8 +1,12 @@
 import React from 'react';
-import { Lock, ShieldCheck } from 'lucide-react';
+import { Home, Lock, ShieldCheck } from 'lucide-react';
 import { motion } from 'motion/react';
 
-export default function PrivacyPolicy() {
+type PrivacyPolicyProps = {
+  onNavigateHome: () => void;
+};
+
+export default function PrivacyPolicy({ onNavigateHome }: PrivacyPolicyProps) {
   return (
     <div className="w-full">
       <section className="mb-12">
@@ -14,6 +18,14 @@ export default function PrivacyPolicy() {
           <p className="max-w-4xl text-lg leading-relaxed text-slate-600">
             This site uses analytics, monetization tools, and interactive content. This page explains what information may be collected and how it is used.
           </p>
+          <button
+            type="button"
+            onClick={onNavigateHome}
+            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+          >
+            <Home className="h-4 w-4" />
+            Back To Hero Page
+          </button>
         </motion.div>
       </section>
 

@@ -1,8 +1,12 @@
 import React from 'react';
-import { BadgeDollarSign, Megaphone } from 'lucide-react';
+import { BadgeDollarSign, Home, Megaphone } from 'lucide-react';
 import { motion } from 'motion/react';
 
-export default function AdvertisingDisclosure() {
+type AdvertisingDisclosureProps = {
+  onNavigateHome: () => void;
+};
+
+export default function AdvertisingDisclosure({ onNavigateHome }: AdvertisingDisclosureProps) {
   return (
     <div className="w-full">
       <section className="mb-12">
@@ -14,6 +18,14 @@ export default function AdvertisingDisclosure() {
           <p className="max-w-4xl text-lg leading-relaxed text-slate-600">
             This site may monetize through display advertising, affiliate partnerships, and sponsored commercial placements.
           </p>
+          <button
+            type="button"
+            onClick={onNavigateHome}
+            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+          >
+            <Home className="h-4 w-4" />
+            Back To Hero Page
+          </button>
         </motion.div>
       </section>
 

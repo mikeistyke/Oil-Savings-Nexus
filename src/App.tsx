@@ -5,7 +5,7 @@ import {
 } from 'recharts';
 import { 
   TrendingUp, TrendingDown, Droplets, Wallet, AlertTriangle, 
-  Info, ArrowUpRight, ArrowDownRight, Activity, Globe, Zap, Facebook
+  Info, ArrowUpRight, ArrowDownRight, Activity, Globe, Zap, Facebook, Home
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { generateNexusData, nexusNarrative } from './data';
@@ -20,6 +20,7 @@ import Analysis from './pages/Analysis';
 import ExecutiveCorruption from './pages/ExecutiveCorruption';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import AdvertisingDisclosure from './pages/AdvertisingDisclosure';
+import PolicyResources from './pages/PolicyResources';
 import ShopResources from './pages/ShopResources';
 import AffiliateAnalytics from './pages/AffiliateAnalytics';
 
@@ -27,7 +28,7 @@ const data = generateNexusData();
 const LIVE_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
 const LIVE_METRICS_TIMEOUT_MS = 35000;
 const MIN_REFRESH_INTERVAL_MS = 60 * 1000;
-const TAB_LABELS = ['Overview', 'Oil Dynamics', 'Retirement Impact', 'Analysis', 'Executive Corruption', 'Shop Resources', 'Affiliate Analytics'] as const;
+const TAB_LABELS = ['Overview', 'Oil Dynamics', 'Retirement Impact', 'Analysis', 'Executive Corruption', 'Policy Resources', 'Shop Resources', 'Affiliate Analytics'] as const;
 const VISITOR_ID_STORAGE_KEY = 'oil-wealth-nexus-visitor-id';
 const ANALYTICS_OWNER_KEY_STORAGE = 'oil-wealth-nexus-analytics-owner-key';
 const ADSENSE_OVERVIEW_SLOT = import.meta.env.VITE_ADSENSE_OVERVIEW_SLOT;
@@ -1051,6 +1052,10 @@ export default function App() {
           <ExecutiveCorruption />
         )}
 
+        {activeTab === 'policy resources' && (
+          <PolicyResources onNavigateHome={() => setActiveTab('overview')} />
+        )}
+
         {activeTab === 'shop resources' && (
           <ShopResources />
         )}
@@ -1060,11 +1065,11 @@ export default function App() {
         )}
 
         {activeTab === 'privacy policy' && (
-          <PrivacyPolicy />
+          <PrivacyPolicy onNavigateHome={() => setActiveTab('overview')} />
         )}
 
         {activeTab === 'advertising disclosure' && (
-          <AdvertisingDisclosure />
+          <AdvertisingDisclosure onNavigateHome={() => setActiveTab('overview')} />
         )}
       </main>
 
@@ -1088,9 +1093,38 @@ export default function App() {
           </div>
           <div className="flex flex-col items-center gap-4 md:items-end">
             <div className="flex gap-6">
-              <a href="#" className="text-slate-400 hover:text-slate-600 transition-colors"><Globe className="w-5 h-5" /></a>
-              <a href="#" className="text-slate-400 hover:text-slate-600 transition-colors"><Droplets className="w-5 h-5" /></a>
-              <a href="#" className="text-slate-400 hover:text-slate-600 transition-colors"><Wallet className="w-5 h-5" /></a>
+              <button
+                type="button"
+                onClick={() => setActiveTab('overview')}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+                aria-label="Return to hero overview"
+              >
+                <Home className="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('overview')}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+                aria-label="Return to hero overview via global context"
+              >
+                <Globe className="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('overview')}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+                aria-label="Return to hero overview via oil icon"
+              >
+                <Droplets className="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('overview')}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+                aria-label="Return to hero overview via wealth icon"
+              >
+                <Wallet className="w-5 h-5" />
+              </button>
               <a
                 href="https://www.facebook.com/groups/oilsavingsnexus/"
                 target="_blank"
@@ -1111,6 +1145,8 @@ export default function App() {
               </a>
             </div>
             <div className="flex flex-wrap justify-center gap-4 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 md:justify-end">
+              <button type="button" onClick={() => setActiveTab('overview')} className="hover:text-slate-900 transition-colors">Home</button>
+              <button type="button" onClick={() => setActiveTab('policy resources')} className="hover:text-slate-900 transition-colors">Policy Resources</button>
               <button type="button" onClick={() => setActiveTab('shop resources')} className="hover:text-slate-900 transition-colors">Shop Resources</button>
               <button type="button" onClick={() => void requestAffiliateAnalyticsAccess()} className="hover:text-slate-900 transition-colors">Affiliate Analytics</button>
               <button type="button" onClick={() => setActiveTab('privacy policy')} className="hover:text-slate-900 transition-colors">Privacy Policy</button>
