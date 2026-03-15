@@ -4,10 +4,12 @@ import { motion } from 'motion/react';
 import AdSlot from '../components/AdSlot';
 import AffiliateRecommendations from '../components/AffiliateRecommendations';
 import EssaySection from '../components/EssaySection';
+import SubscriptionGate from '../components/SubscriptionGate';
 import { ExecutiveCorruptionProvider } from '../context/ExecutiveCorruptionContext';
 import { useExecutiveCorruption } from '../hooks/useExecutiveCorruption';
 
 const ADSENSE_ESSAY_SLOT = import.meta.env.VITE_ADSENSE_ESSAY_SLOT;
+
 const essayAffiliateItems = [
   {
     title: 'Monroe Doctrine and hemispheric strategy reading list',
@@ -26,21 +28,25 @@ const essayAffiliateItems = [
 function ExecutiveCorruptionContent() {
   const { title, byline, intro, thesis, sections, sources } = useExecutiveCorruption();
 
+  // Section 0 is the free preview. Sections 1+ are gated.
+  const previewSection = sections[0];
+  const gatedSections = sections.slice(1);
+
   return (
     <div className="w-full">
+      {/* ── Header ── */}
       <section className="mb-12">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
           <div className="mb-4 flex items-center gap-3">
             <ShieldAlert className="h-8 w-8 text-rose-600" />
             <h2 className="text-3xl font-bold text-slate-900 md:text-4xl">{title}</h2>
           </div>
-          <p className="max-w-4xl text-lg leading-relaxed text-slate-600">
-            {intro}
-          </p>
+          <p className="max-w-4xl text-lg leading-relaxed text-slate-600">{intro}</p>
           <p className="mt-4 text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">{byline}</p>
         </motion.div>
       </section>
 
+      {/* ── Thesis ── */}
       <motion.section
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -55,26 +61,35 @@ function ExecutiveCorruptionContent() {
         </div>
       </motion.section>
 
+      {/* ── Essay + Sources grid ── */}
       <div className="mb-12 grid gap-8 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.8fr)]">
         <div className="space-y-8">
-          {sections.map((section, index) => (
-            <React.Fragment key={section.id}>
-              <EssaySection section={section} emphasizeLeadWord={index === 0} />
-              {index === 0 && (
-                <AdSlot slot={ADSENSE_ESSAY_SLOT} label="Advertisement" />
-              )}
-              {index === 0 && (
-                <AffiliateRecommendations
-                  title="Further Reading"
-                  items={essayAffiliateItems}
-                  pageId="executive-corruption"
-                  blockId="executive-corruption-further-reading"
-                />
-              )}
-            </React.Fragment>
-          ))}
+          <SubscriptionGate
+            preview={
+              previewSection ? (
+                <>
+                  <EssaySection section={previewSection} emphasizeLeadWord />
+                  <AdSlot slot={ADSENSE_ESSAY_SLOT} label="Advertisement" />
+                  <AffiliateRecommendations
+                    title="Further Reading"
+                    items={essayAffiliateItems}
+                    pageId="executive-corruption"
+                    blockId="executive-corruption-further-reading"
+                  />
+                </>
+              ) : null
+            }
+            gated={
+              <div className="space-y-8">
+                {gatedSections.map((section) => (
+                  <EssaySection key={section.id} section={section} />
+                ))}
+              </div>
+            }
+          />
         </div>
 
+        {/* ── Source notes sidebar ── */}
         <motion.aside
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -87,7 +102,9 @@ function ExecutiveCorruptionContent() {
           <div className="space-y-5">
             {sources.map((source) => (
               <div key={source.id} className="rounded-2xl border border-slate-700 bg-slate-800/70 p-4">
-                <p className="text-xs font-bold uppercase tracking-[0.22em] text-amber-400">{source.id} {source.category}</p>
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-amber-400">
+                  {source.id} {source.category}
+                </p>
                 <a
                   href={source.href}
                   target="_blank"
@@ -96,7 +113,9 @@ function ExecutiveCorruptionContent() {
                 >
                   {source.label}
                 </a>
-                <p className="mt-2 text-xs uppercase tracking-[0.18em] text-slate-400">{source.organization} • {source.year}</p>
+                <p className="mt-2 text-xs uppercase tracking-[0.18em] text-slate-400">
+                  {source.organization} • {source.year}
+                </p>
                 <p className="mt-3 text-sm leading-6 text-slate-300">{source.note}</p>
               </div>
             ))}
