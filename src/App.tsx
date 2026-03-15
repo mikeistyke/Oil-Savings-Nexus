@@ -1035,6 +1035,7 @@ export default function App() {
           </div>
           <div className="absolute right-0 top-0 w-1/3 h-full bg-gradient-to-l from-indigo-500/10 to-transparent hidden lg:block" />
         </section>
+        <HeroCTA />
         </>
         )}
 
