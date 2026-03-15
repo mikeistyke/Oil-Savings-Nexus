@@ -23,6 +23,7 @@ import AdvertisingDisclosure from './pages/AdvertisingDisclosure';
 import PolicyResources from './pages/PolicyResources';
 import ShopResources from './pages/ShopResources';
 import AffiliateAnalytics from './pages/AffiliateAnalytics';
+import HeroCTA from './components/HeroCTA';
 
 const data = generateNexusData();
 const LIVE_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
@@ -558,6 +559,7 @@ export default function App() {
           </div>
         </section>
 
+        <HeroCTA />
         {/* Stats Grid */}
         <div className="mb-4 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
           <div>

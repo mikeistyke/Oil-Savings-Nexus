@@ -36,7 +36,7 @@ interface SubscriptionModalProps {
   onClose: () => void;
 }
 
-function SubscriptionModal({ onClose }: SubscriptionModalProps) {
+export function SubscriptionModal({ onClose }: SubscriptionModalProps) {
   const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly');
 
   const checkoutUrl =
