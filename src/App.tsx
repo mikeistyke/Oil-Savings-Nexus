@@ -559,7 +559,7 @@ export default function App() {
           </div>
         </section>
 
-        <HeroCTA />
+     
         {/* Stats Grid */}
         <div className="mb-4 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
           <div>
