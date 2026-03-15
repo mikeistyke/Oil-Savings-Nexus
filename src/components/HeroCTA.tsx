@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowRight, TrendingDown, BookOpen } from 'lucide-react';
+import { SubscriptionModal } from './SubscriptionGate';
 
-
-
+export default function HeroCTA() {
+  const [showModal, setShowModal] = useState(false);
 
   return (
     <>
@@ -75,14 +76,15 @@ import { ArrowRight, TrendingDown, BookOpen } from 'lucide-react';
           {/* Right — CTA */}
           <div className="flex flex-col gap-4 md:min-w-[220px]">
 
-            <a
-              href="#analysis"
+            <button
+              type="button"
+              onClick={() => setShowModal(true)}
               className="group flex items-center justify-center gap-3 rounded-2xl bg-amber-400 px-8 py-5 text-sm font-black uppercase tracking-[0.18em] text-slate-900 shadow-lg transition-all hover:bg-amber-300 active:scale-95"
             >
               <BookOpen className="h-4 w-4" />
               Read the Brief
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </a>
+            </button>
 
             <p className="text-center text-[11px] font-medium text-slate-600">
               Cancel anytime · Instant access
@@ -91,7 +93,9 @@ import { ArrowRight, TrendingDown, BookOpen } from 'lucide-react';
         </div>
       </motion.section>
 
-
+      <AnimatePresence>
+        {showModal && <SubscriptionModal onClose={() => setShowModal(false)} />}
+      </AnimatePresence>
     </>
   );
 }
