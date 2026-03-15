@@ -7,8 +7,8 @@ import { Lock, Sparkles, ArrowRight, CheckCircle2, X } from 'lucide-react';
 // e.g. https://your-store.lemonsqueezy.com/checkout/buy/your-variant-id
 const CHECKOUT_URL = import.meta.env.VITE_LS_CHECKOUT_URL ?? '#';
 const TOKEN_STORAGE_KEY = 'osn-subscriber-token';
-const PRICE_DISPLAY = '$9 / month';
-const ANNUAL_DISPLAY = '$79 / year — save $29';
+const PRICE_DISPLAY = '$19 / month';
+const ANNUAL_DISPLAY = '$149 / year — save $79';
 
 // ─── Token validation ─────────────────────────────────────────────────────────
 // After Lemon Squeezy webhook fires, your /api/verify-subscription.ts
