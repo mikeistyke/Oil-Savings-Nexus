@@ -82,7 +82,7 @@ export default function HeroCTA() {
               className="group flex items-center justify-center gap-3 rounded-2xl bg-amber-400 px-8 py-5 text-sm font-black uppercase tracking-[0.18em] text-slate-900 shadow-lg transition-all hover:bg-amber-300 active:scale-95"
             >
               <BookOpen className="h-4 w-4" />
-              Read the Brief
+              Subscribe to the Brief
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </button>
 
