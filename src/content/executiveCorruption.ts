@@ -97,7 +97,7 @@ export const executiveCorruptionSections: ExecutiveCorruptionSection[] = [
       'As someone wired for context and connection, I\'m less interested in whether this doctrine is strong and more interested in what it does to the web of relationships that keep markets and people stable.',
       'My strengths live in wonder and enablement, so I naturally ask: what else could we build, short of invasion, that still protects people from wild swings at the pump?',
       'Note on process: I drafted this reflection with support from Google\'s Gemini AI, then rewrote, fact-checked, and shaped it in my own voice. Any errors - or strong opinions - are mine alone.',
-      'Ever clicked through a story that mentions "sources" but leaves you hunting for the actual links? From my desk in Elkton, Virginia, on this quiet March morning in 2026, I get it - that itch for the raw material behind the words. Here are direct links to key sources referenced throughout our discussion on the Trump Corollary and its reworking of the Monroe Doctrine, pulled straight from the analyses we\'ve covered.',
+      'Ever clicked through a story that mentions "sources" but leaves you hunting for the actual links? From my desk in Shenandoah, Virginia, on this quiet March morning in 2026, I get it - that itch for the raw material behind the words. Here are direct links to key sources referenced throughout our discussion on the Trump Corollary and its reworking of the Monroe Doctrine, pulled straight from the analyses we\'ve covered.',
     ],
     citations: ['[1]', '[2]', '[3]', '[4]', '[5]', '[6]'],
   },
