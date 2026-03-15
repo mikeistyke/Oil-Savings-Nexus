@@ -92,9 +92,7 @@ export default function HeroCTA() {
         </div>
       </motion.section>
 
-      <AnimatePresence>
-        {showModal && <SubscriptionModal onClose={() => setShowModal(false)} />}
-      </AnimatePresence>
+      {/* Removed SubscriptionModal at the top as per instructions */}
     </>
   );
 }
